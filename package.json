@@ -1,0 +1,12 @@
+{
+	"name": "frame-buffer-test",
+	"version": "1.0.0",
+	"description": "this is a test repo in this i test the /dev/fb0",
+	"main": "main.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": ["frameBuffer","/dev/fb0","frame","buffer","test-repo","linux"],
+	"author": "LFF5644",
+	"license": "ISC"
+}

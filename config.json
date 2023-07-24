@@ -1,0 +1,6 @@
+{
+	"frameBufferPath": "/dev/fb0",
+	"frameBufferLength": 8294400,
+	"screen_height": 1080,
+	"screen_width": 1920
+}
