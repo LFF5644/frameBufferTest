@@ -49,11 +49,11 @@ function changePlayerPos(x,y){
 	}
 	playerPos=newPlayerPos;
 
-	if(playerPos[0]<0) playerPos[0]=0;
-	else if(playerPos[0]>screen_width-1) playerPos[0]=(screen_width-1)-20;
+	if(playerPos[0]-20<0) playerPos[0]=0;
+	else if(playerPos[0]+20>screen_width-1) playerPos[0]=(screen_width-1)-20;
 
-	if(playerPos[1]<0) playerPos[1]=0;
-	else if(playerPos[1]>screen_height-1) playerPos[1]=(screen_height-1)-20;
+	if(playerPos[1]-20<0) playerPos[1]=0;
+	else if(playerPos[1]+20>screen_height-1) playerPos[1]=(screen_height-1)-20;
 
 	for(let y=playerPos[1]; y<playerPos[1]+20; y+=1){
 		for(let x=playerPos[0]; x<playerPos[0]+20; x+=1){
@@ -62,7 +62,7 @@ function changePlayerPos(x,y){
 	}
 }
 function log(data){
-	fs.appendFile(log_file,String(data),()=>{});
+	fs.appendFile(log_file,String(data)+"\n",()=>{});
 }
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
@@ -107,8 +107,8 @@ process.stdin.on("data",keyBuffer=>{
 
 	if( // quit game
 		byte===3||
-		byte===17||
-		byte===27
+		byte===17
+		//byte===27
 	){
 		buffer.fill(0);
 		writeFrame();
