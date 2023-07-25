@@ -1,7 +1,7 @@
 {
-	"frameBufferLength": 4325376,
+	"frameBufferLength": 8294400,
 	"frameBufferPath": "/dev/fb0",
 	"lineLength": 5632,
-	"screen_height": 768,
-	"screen_width": 1408
+	"screen_height": 1080,
+	"screen_width": 1920
 }
