@@ -1,7 +1,11 @@
-const fs = require('fs');
+let chars=require("./chars.json");
 const config=require("./config.json");
+const fs = require('fs');
 
+const cursor_hide="\u001B[?25l";
+const cursor_show="\u001B[?25h";
 const log_file="log/main.log";
+
 const {
 	frameBufferLength,
 	frameBufferPath,
@@ -61,6 +65,51 @@ function changePlayerPos(x,y){
 		}
 	}
 }
+function writeText(startX,startY,size,content,...rgba){
+	const letterSpacing=10;
+	for(let index=0; index<content.length; index+=1){
+		const char=content[index];
+		const currentX=startX+index*(8*size+letterSpacing);
+		//writePixelPos(currentX,startY,...rgba);
+
+		let charMap=chars[char];
+		if(!charMap||size===0) continue;
+		if(size>1){
+			let newCharMap=[];
+
+			for(let counterRow=0; counterRow<8; counterRow+=1){
+				const row=[];
+				for(let counterColumn=0; counterColumn<8; counterColumn+=1){
+					const pixelIndex=counterRow*8+counterColumn;
+					const byte=charMap[pixelIndex];
+
+					for(let i=0; i<size; i+=1){
+						row.push(byte);
+					}
+				}
+				for(let i=0; i<size; i+=1){
+					newCharMap=[
+						...newCharMap,
+						...row,
+					];
+				}
+			}
+
+			charMap=newCharMap;
+		}
+		
+		for(let row=0; row<8*size; row+=1){
+			for(let column=0; column<8*size; column+=1){
+				const pixelIndex=(row*8*size)+column;
+				const writePixel=charMap[pixelIndex];
+				if(!writePixel) continue;
+				const x=currentX+column;
+				const y=startY+row;
+				writePixelPos(x,y,...rgba);
+			}
+		}
+	}
+}
 function log(data){
 	fs.appendFile(log_file,String(data)+"\n",()=>{});
 }
@@ -68,6 +117,8 @@ function log(data){
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
 log(`Display: ${screen_width}x${screen_height}.`);
 log(`Using "${frameBufferPath}"`);
+
+process.stdout.write(cursor_hide); // hide the cursor in console
 
 const buffer=Buffer.alloc(frameBufferLength);
 
@@ -89,36 +140,61 @@ changePlayerPos(...playerPos);
 
 process.stdin.setRawMode(true); // no enter required
 process.stdin.on("data",keyBuffer=>{
-	const byte=keyBuffer[0];
-	log(byte);
+	const char=keyBuffer.toString("utf-8");
 
-	if(byte===119){ 	// "W" pressed
-		changePlayerPos(playerPos[0],playerPos[1]-playerStep);
-	}
-	else if(byte===97){ // "A" pressed
-		changePlayerPos(playerPos[0]-playerStep,playerPos[1]);
-	}
-	else if(byte===115){ // "S" pressed
-		changePlayerPos(playerPos[0],playerPos[1]+playerStep);
-	}
-	else if(byte===100){ // "D" pressed
-		changePlayerPos(playerPos[0]+playerStep,playerPos[1]);
+	let makeNewFrame=false;
+	switch(char){
+		case "\u001b[A": // Arrow up /\
+		case "w":
+			changePlayerPos(playerPos[0],playerPos[1]-playerStep);
+			makeNewFrame=true;
+			break;
+
+		case "\u001b[D": // Arrow left <-
+		case "a":
+			changePlayerPos(playerPos[0]-playerStep,playerPos[1]);
+			makeNewFrame=true;
+			break;
+
+		case "\u001b[B": // Arrow down \/
+		case "s":
+			changePlayerPos(playerPos[0],playerPos[1]+playerStep);
+			makeNewFrame=true;
+			break;
+
+		case "\u001b[C": // Arrow right ->
+		case "d":
+			changePlayerPos(playerPos[0]+playerStep,playerPos[1]);
+			makeNewFrame=true;
+			break;
+
+		case "\u0003": // STRG + C
+		case "\u00b1": // ESC
+		case "q":
+			buffer.fill(0);
+			writeFrame();
+			fs.close(frameBufferAddress);
+
+			process.stdout.write(cursor_show); // show cursor in terminal
+			console.clear();
+			log("Game Quit!");
+			console.log("Game Quit!");
+			setTimeout(()=>process.exit(0),1e3);
+		case "r":
+			log("Reloading Chars...");
+			chars=JSON.parse(fs.readFileSync("./chars.json","utf-8"));
+			buffer.fill(255);
+			changePlayerPos(...playerPos);
+		case "t":	// t for test
+			writeText(100,100,4,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",0,0,0);
+			writeText(100,200,4,"abcdefghijklmnopqrstuvwxyz",0,0,0);
+			writeText(100,300,4,"Test Pass!",0,255,0);
+			writeText(100,500,4,"Press \"Q\" to quit",0,0,255);
+			makeNewFrame=true;
+			break;
 	}
 
-	if( // quit game
-		byte===3||
-		byte===17
-		//byte===27
-	){
-		buffer.fill(0);
-		writeFrame();
-		fs.close(frameBufferAddress);
-
-		log("Game Quit!");
-		process.exit(0);
-	}
-
-	writeFrame();
+	if(makeNewFrame) writeFrame();
 
 
 });
