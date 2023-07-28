@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 let chars=require("./chars.json");
 const config=require("./config.json");
 const fs = require('fs');
@@ -6,6 +7,7 @@ const cursor_hide="\u001B[?25l";
 const cursor_show="\u001B[?25h";
 const log_file="log/main.log";
 
+let log_data="";
 const {
 	frameBufferLength,
 	frameBufferPath,
@@ -67,11 +69,11 @@ function changePlayerPos(x,y){
 }
 function writeText(startX,startY,size,content,...rgba){
 	const letterSpacing=10;
+	let ignoreRows=0;
 	for(let index=0; index<content.length; index+=1){
 		const char=content[index];
-		const currentX=startX+index*(8*size+letterSpacing);
+		const currentX=startX+index*(8*size+letterSpacing)-ignoreRows;
 		//writePixelPos(currentX,startY,...rgba);
-
 		let charMap=chars[char];
 		if(!charMap||size===0) continue;
 		if(size>1){
@@ -97,21 +99,57 @@ function writeText(startX,startY,size,content,...rgba){
 
 			charMap=newCharMap;
 		}
-		
-		for(let row=0; row<8*size; row+=1){
+		if(charMap.includes(1)){
 			for(let column=0; column<8*size; column+=1){
-				const pixelIndex=(row*8*size)+column;
-				const writePixel=charMap[pixelIndex];
-				if(!writePixel) continue;
-				const x=currentX+column;
-				const y=startY+row;
-				writePixelPos(x,y,...rgba);
+				let rowEmpty=true;
+				for(let row=0; row<8*size; row+=1){
+					const pixelIndex=(row*8*size)+column;
+					const writePixel=charMap[pixelIndex];
+					if(writePixel){
+						rowEmpty=false;
+						break;
+					}
+				}
+				if(rowEmpty) ignoreRows+=1;
+				else break;
+			}
+
+			for(let column=7*size; column>0; column-=1){
+				let rowEmpty=true;
+				for(let row=0; row<8*size; row+=1){
+					const pixelIndex=(row*8*size)+column;
+					const writePixel=charMap[pixelIndex];
+					if(writePixel){
+						rowEmpty=false;
+						break;
+					}
+				}
+				if(rowEmpty) ignoreRows+=1;
+				else break;
+			}
+
+			for(let row=0; row<8*size; row+=1){
+				for(let column=0; column<8*size; column+=1){
+					const pixelIndex=(row*8*size)+column;
+					const writePixel=charMap[pixelIndex];
+					if(!writePixel) continue;
+					const x=currentX+column;
+					const y=startY+row;
+					writePixelPos(x,y,...rgba);
+				}
 			}
 		}
 	}
 }
 function log(data){
-	fs.appendFile(log_file,String(data)+"\n",()=>{});
+	log_data+=data+"\n";
+}
+async function saveLog(){
+	const data=log_data;
+	log_data="";
+	await new Promise(r=>{
+		fs.appendFile(log_file,data,r);
+	});
 }
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
@@ -173,23 +211,27 @@ process.stdin.on("data",keyBuffer=>{
 		case "q":
 			buffer.fill(0);
 			writeFrame();
-			fs.close(frameBufferAddress);
+			fs.close(frameBufferAddress,(err)=>{ // fix message no callback is depprecated!
+				if(err) throw err;
+			});
 
 			process.stdout.write(cursor_show); // show cursor in terminal
-			console.clear();
 			log("Game Quit!");
+			console.clear();
 			console.log("Game Quit!");
-			setTimeout(()=>process.exit(0),1e3);
+			//saveLog();
+			setTimeout(()=>process.exit(0),1e2);
+			break;
 		case "r":
 			log("Reloading Chars...");
 			chars=JSON.parse(fs.readFileSync("./chars.json","utf-8"));
 			buffer.fill(255);
 			changePlayerPos(...playerPos);
 		case "t":	// t for test
-			writeText(100,100,4,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",0,0,0);
-			writeText(100,200,4,"abcdefghijklmnopqrstuvwxyz",0,0,0);
-			writeText(100,300,4,"Test Pass!",0,255,0);
-			writeText(100,500,4,"Press \"Q\" to quit",0,0,255);
+			writeText(100,100,3,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",0,0,0);
+			writeText(100,200,3,"abcdefghijklmnopqrstuvwxyz",0,0,0);
+			writeText(100,300,3,"Test Pass!",0,255,0);
+			writeText(100,500,3,"Press \"Q\" to quit",0,0,255);
 			makeNewFrame=true;
 			break;
 	}
@@ -200,3 +242,5 @@ process.stdin.on("data",keyBuffer=>{
 });
 
 writeFrame();
+
+setInterval(saveLog,1e3);
