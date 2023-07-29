@@ -2,7 +2,7 @@
 
 In diesem project lerne ich über den frame buffer!
 
-readme ist auf dem stand von `0c8414dc126ec8d013524301e6ffd6000b16dd75` am 29.07.2023 um 12:37 Uhr
+readme ist auf dem stand vom 29.07.2023 um 23:58 Uhr
 
 ## Required
 - [Linux](https://google.com/search?q=Linux%20download) ich empfele [Linuxmint](https://linuxmint.com/download.php) für windows nutzer
