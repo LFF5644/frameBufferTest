@@ -8,7 +8,7 @@ readme ist auf dem stand von `0c8414dc126ec8d013524301e6ffd6000b16dd75` am 29.07
 - [Linux](https://google.com/search?q=Linux%20download) ich empfele [Linuxmint](https://linuxmint.com/download.php) für windows nutzer
 - [NodeJS](https://nodejs.org/de/download)
 - console (TTY 1 - 6)
-- frame buffer schreib berechtitung erlangen durch `sudo usermod -aG video $USER; suo reboot` oder durch root berechtigungen
+- frame buffer schreib berechtitung erlangen durch `sudo usermod -aG video $USER; sudo reboot` oder durch root berechtigungen
 - fbset um informationen über den frambuffer zu erlangen `sudo apt intall fbset -y` wird nicht benötigt ist aber für ungewönliche bildformate empfolen
 
 ## Quick start guide
