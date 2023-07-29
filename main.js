@@ -23,6 +23,14 @@ function getRandomColor(){
 		Math.min(255,Math.round(Math.random()*255)),
 	];
 }
+function getRandomPos(width=0,height=0){
+	const maxX=(screen_width-1)-width;
+	const maxY=(screen_height-1)-height;
+	return[
+		Math.min(maxX,Math.round(Math.random()*maxX)),
+		Math.min(maxY,Math.round(Math.random()*maxY)),
+	];
+}
 function getPos(x,y){
 	let posX=x;
 	let posY=y*screen_width;
@@ -96,14 +104,25 @@ function onPlayerPosChanged(){
 	const newCollisionObjects=[];
 	for(let index=0; index<collisionObjects.length; index+=1){
 		const entry=collisionObjects[index];
-		const [entry_x,entry_y,entry_width,entry_height,...entryColor]=entry;
+		//const [entry_x,entry_y,entry_width,entry_height,...entryColor]=entry;
 		const collision=checkPlayerCollision(...entry);
 		if(collision){
-			writeRectangle(entry_x,entry_y,entry_width,entry_height,...bgColor);
-			writeRectangle(...playerPos,...playerSize,...playerColor);
 			writeText(100,100,2,"WINNER!",...getRandomColor());
+			newCollisionObjects.push([...getRandomPos(10,10),10,10,...getRandomColor()]);
 		}
 		else newCollisionObjects.push(entry);
+	}
+	changeCollisionsObjects(newCollisionObjects);
+	writeRectangle(...playerPos,...playerSize,...playerColor);
+
+}
+function changeCollisionsObjects(newCollisionObjects){
+	for(let entry of collisionObjects){
+		const [entry_x,entry_y,entry_width,entry_height,...entryColor]=entry;
+		writeRectangle(entry_x,entry_y,entry_width,entry_height,...bgColor);
+	}
+	for(let entry of newCollisionObjects){
+		writeRectangle(...entry);
 	}
 	collisionObjects=newCollisionObjects;
 }
@@ -212,8 +231,10 @@ let playerSize=[20,20];
 let playerStep=20;
 let collisionObjects=[
 	// [x,y,width,height,...rgb]
-	[50,50,10,10,0,255,0],
-	[100,100,10,10,0,255,0],
+	[...getRandomPos(10,10),10,10,...getRandomColor()],
+	[...getRandomPos(10,10),10,10,...getRandomColor()],
+	[...getRandomPos(10,10),10,10,...getRandomColor()],
+	[...getRandomPos(10,10),10,10,...getRandomColor()],
 ];
 
 // write bg color to screen
