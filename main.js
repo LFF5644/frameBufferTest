@@ -69,10 +69,10 @@ function changePlayerPos(x,y){
 }
 function writeText(startX,startY,size,content,...rgba){
 	const letterSpacing=10;
-	let ignoreRows=0;
+	let currentX=startX;
 	for(let index=0; index<content.length; index+=1){
 		const char=content[index];
-		const currentX=startX+index*(8*size+letterSpacing)-ignoreRows;
+		//const currentX=startX+index*(8*size+letterSpacing)-ignoreRows;
 		//writePixelPos(currentX,startY,...rgba);
 		let charMap=chars[char];
 		if(!charMap||size===0) continue;
@@ -99,6 +99,8 @@ function writeText(startX,startY,size,content,...rgba){
 
 			charMap=newCharMap;
 		}
+		let emptyRowsAtStart=0;
+		let emptyRowsAtEnd=0;
 		if(charMap.includes(1)){
 			for(let column=0; column<8*size; column+=1){
 				let rowEmpty=true;
@@ -110,7 +112,7 @@ function writeText(startX,startY,size,content,...rgba){
 						break;
 					}
 				}
-				if(rowEmpty) ignoreRows+=1;
+				if(rowEmpty) emptyRowsAtStart+=1;
 				else break;
 			}
 
@@ -124,10 +126,12 @@ function writeText(startX,startY,size,content,...rgba){
 						break;
 					}
 				}
-				if(rowEmpty) ignoreRows+=1;
+				if(rowEmpty) emptyRowsAtEnd+=1;
 				else break;
 			}
-
+		}
+		currentX+=8*size-emptyRowsAtStart;
+		if(charMap.includes(1)){
 			for(let row=0; row<8*size; row+=1){
 				for(let column=0; column<8*size; column+=1){
 					const pixelIndex=(row*8*size)+column;
@@ -139,6 +143,7 @@ function writeText(startX,startY,size,content,...rgba){
 				}
 			}
 		}
+		currentX+=letterSpacing-emptyRowsAtEnd;
 	}
 }
 function log(data){
