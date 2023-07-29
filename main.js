@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+console.log("starting ...");
 let chars=require("./chars.json");
 const config=require("./config.json");
 const fs = require('fs');
@@ -15,6 +16,13 @@ const {
 	screen_width,
 }=config;
 
+function getRandomColor(){
+	return[
+		Math.min(255,Math.round(Math.random()*255)),
+		Math.min(255,Math.round(Math.random()*255)),
+		Math.min(255,Math.round(Math.random()*255)),
+	];
+}
 function getPos(x,y){
 	let posX=x;
 	let posY=y*screen_width;
@@ -56,14 +64,23 @@ function writePixelPos(x,y,...rgba){
 	const offset=getPos(x,y);
 	writePixel_offset(offset,...rgba);
 }
+function checkPlayerCollision(entry_x,entry_y,entry_width,entry_height){
+	const [player_x,player_y]=playerPos;
+	const [player_width,player_height]=playerSize;
+	if( // help from chatGPT
+		player_x<entry_x+entry_width&&
+		player_x+player_width>entry_x&&
+		player_y<entry_y+entry_height&&
+		player_y+player_height>entry_y
+	) return true;
+
+	return false;
+}
 function changePlayerPos(x,y){
+	if(playerPos[0]===x&&playerPos[1]===y) return;
 	const newPlayerPos=[x,y];
 
-	for(let y=playerPos[1]; y<playerPos[1]+20; y+=1){
-		for(let x=playerPos[0]; x<playerPos[0]+20; x+=1){
-			writePixelPos(x,y,...bgColor);
-		}
-	}
+	writeRectangle(...playerPos,...playerSize,...bgColor);
 	playerPos=newPlayerPos;
 
 	if(playerPos[0]-20<0) playerPos[0]=0;
@@ -72,14 +89,30 @@ function changePlayerPos(x,y){
 	if(playerPos[1]-20<0) playerPos[1]=0;
 	else if(playerPos[1]+20>screen_height-1) playerPos[1]=(screen_height-1)-20;
 
-	for(let y=playerPos[1]; y<playerPos[1]+20; y+=1){
-		for(let x=playerPos[0]; x<playerPos[0]+20; x+=1){
-			writePixelPos(x,y,...playerColor);
-		}
-	}
+	writeRectangle(...playerPos,...playerSize,...playerColor);
+	onPlayerPosChanged();
 }
 function onPlayerPosChanged(){
-	// ...
+	const newCollisionObjects=[];
+	for(let index=0; index<collisionObjects.length; index+=1){
+		const entry=collisionObjects[index];
+		const [entry_x,entry_y,entry_width,entry_height,...entryColor]=entry;
+		const collision=checkPlayerCollision(...entry);
+		if(collision){
+			writeRectangle(entry_x,entry_y,entry_width,entry_height,...bgColor);
+			writeRectangle(...playerPos,...playerSize,...playerColor);
+			writeText(100,100,2,"WINNER!",...getRandomColor());
+		}
+		else newCollisionObjects.push(entry);
+	}
+	collisionObjects=newCollisionObjects;
+}
+function writeRectangle(startX,startY,width,height,...rgb){
+	for(let y=startY; y<startY+height; y+=1){
+		for(let x=startX; x<startX+width; x+=1){
+			writePixelPos(x,y,...rgb);
+		}
+	}
 }
 function writeText(startX,startY,size,content,...rgba){
 	const letterSpacing=10;
@@ -175,15 +208,28 @@ let bgColor=[255,255,255];
 
 let playerColor=[255,0,0];
 let playerPos=[Math.round(screen_width/2)-10,Math.round(screen_height/2)-10];
-let playerStep=50;
+let playerSize=[20,20];
+let playerStep=20;
+let collisionObjects=[
+	// [x,y,width,height,...rgb]
+	[50,50,10,10,0,255,0],
+	[100,100,10,10,0,255,0],
+];
 
+// write bg color to screen
 for(let y=0; y<screen_height-1; y+=1){
 	for(let x=0; x<screen_width-1; x+=1){
 		writePixelPos(x,y,...bgColor);
 	}
 }
 
-changePlayerPos(...playerPos);
+// write collisionObjects
+for(let entry of collisionObjects){
+	writeRectangle(...entry);
+}
+
+// write player
+writeRectangle(...playerPos,...playerSize,...playerColor);
 
 process.stdin.setRawMode(true); // no enter required
 process.stdin.on("data",keyBuffer=>{
@@ -235,7 +281,7 @@ process.stdin.on("data",keyBuffer=>{
 			log("Reloading Chars...");
 			chars=JSON.parse(fs.readFileSync("./chars.json","utf-8"));
 			buffer.fill(255);
-			changePlayerPos(...playerPos);
+			writeRectangle(...playerPos,...playerSize,...playerColor);
 		case "t":	// t for test
 			writeText(100,100,3,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",0,0,0);
 			writeText(100,200,3,"abcdefghijklmnopqrstuvwxyz",0,0,0);
@@ -246,8 +292,6 @@ process.stdin.on("data",keyBuffer=>{
 	}
 
 	if(makeNewFrame) writeFrame();
-
-
 });
 
 writeFrame();
