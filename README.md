@@ -24,4 +24,15 @@ du benötigst eine `config.json` und einen `log` ordner du kannst dereckt beides
 - `overwriteFB.js`: ist eine endlos schleife wo einfach jeder pixel eine andere fabe hat `STRG + C` to exit
 - `main.js`: ein kleines spiel wo man einen spieler mit den pfeiltasten bewegen kann und mit `t` alle bustaben auf dem bildschirm ausgibt und mit `r` wird die `chars.json` neu geladen und die bustaben erneut angezeigt mit `q` wird es beendet und in `log/main.log` wird eine log datei erstelt
 
+## Aufgaben, Tasks und Herausfoderungen
+- [x] game mit spieler
+- [x] spieler glitzt nicht aus dem spielfeld
+- [ ] spieler kann irgenwelche sachen aufsammeln
+- [ ] spieler beckommt eine art `hitbox`
+- [x] es kann text angezeigt werden
+- [x] zeichen sind nur so groß wie sie sein müssen
+- [ ] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows`  das zeichen hat
+- [ ] space ` ` wird sowas wie hardcode
+- [ ] noch mehr Herausfoderungen schreiben 
+
 ###### README.md erstellt 29.07.2023 um 13:12 Uhr
