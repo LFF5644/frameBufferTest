@@ -31,9 +31,20 @@ function getPos(x,y){
 	});*/
 	return offset;
 }
-function writePixelPos(x,y,...rgba){
-	const offset=getPos(x,y);
-	writePixel_offset(offset,...rgba);
+function writeFrame(){return new Promise(resolve=>{
+	// write into framebuffer
+	fs.write(frameBufferAddress,buffer,0,frameBufferLength,0,resolve);
+})}
+function log(data){
+	// append into log
+	log_data+=data+"\n";
+}
+async function saveLog(){
+	const data=log_data;
+	log_data="";
+	await new Promise(r=>{
+		fs.appendFile(log_file,data,r);
+	});
 }
 function writePixel_offset(offset,...rgba){
 	buffer.writeUInt8(rgba[0],offset);
@@ -41,10 +52,10 @@ function writePixel_offset(offset,...rgba){
 	buffer.writeUInt8(rgba[2],offset+2);
 	buffer.writeUInt8(255,offset+3);
 }
-function writeFrame(){return new Promise(resolve=>{
-	// write into framebuffer
-	fs.write(frameBufferAddress,buffer,0,frameBufferLength,0,resolve);
-})}
+function writePixelPos(x,y,...rgba){
+	const offset=getPos(x,y);
+	writePixel_offset(offset,...rgba);
+}
 function changePlayerPos(x,y){
 	const newPlayerPos=[x,y];
 
@@ -66,6 +77,9 @@ function changePlayerPos(x,y){
 			writePixelPos(x,y,...playerColor);
 		}
 	}
+}
+function onPlayerPosChanged(){
+	// ...
 }
 function writeText(startX,startY,size,content,...rgba){
 	const letterSpacing=10;
@@ -145,16 +159,6 @@ function writeText(startX,startY,size,content,...rgba){
 		}
 		currentX+=letterSpacing-emptyRowsAtEnd;
 	}
-}
-function log(data){
-	log_data+=data+"\n";
-}
-async function saveLog(){
-	const data=log_data;
-	log_data="";
-	await new Promise(r=>{
-		fs.appendFile(log_file,data,r);
-	});
 }
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
