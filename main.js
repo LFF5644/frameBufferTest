@@ -114,7 +114,6 @@ function onPlayerPosChanged(){
 	}
 	changeCollisionsObjects(newCollisionObjects);
 	writeRectangle(...playerPos,...playerSize,...playerColor);
-
 }
 function changeCollisionsObjects(newCollisionObjects){
 	for(let entry of collisionObjects){
@@ -304,10 +303,13 @@ process.stdin.on("data",keyBuffer=>{
 			buffer.fill(255);
 			writeRectangle(...playerPos,...playerSize,...playerColor);
 		case "t":	// t for test
-			writeText(100,100,3,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",0,0,0);
-			writeText(100,200,3,"abcdefghijklmnopqrstuvwxyz",0,0,0);
-			writeText(100,300,3,"Test Pass!",0,255,0);
-			writeText(100,500,3,"Press \"Q\" to quit",0,0,255);
+			const size=3;
+			writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",0,0,0);
+			writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",0,0,0);
+			writeText(100,150,size,"0123456789");
+			writeText(100,200,size,"!\"/");
+			writeText(100,250,size,"Test Pass!",0,255,0);
+			writeText(100,300,size,"Press \"Q\" to quit",0,0,255);
 			makeNewFrame=true;
 			break;
 	}
