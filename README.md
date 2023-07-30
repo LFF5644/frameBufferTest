@@ -34,7 +34,7 @@ du benötigst eine `config.json` und einen `log` ordner du kannst dereckt beides
 - [x] zeichen sind nur so groß wie sie sein müssen
 - [ ] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows`  das zeichen hat
 - [ ] space ` ` wird sowas wie hardcode
-- [ ] add numbers to chars.json
+- [x] add numbers to chars.json
 - [ ] noch mehr Herausfoderungen schreiben 
 
 ###### README.md erstellt 29.07.2023 um 13:12 Uhr
