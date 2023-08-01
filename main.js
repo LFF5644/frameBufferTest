@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 console.log("starting ...");
-let chars=require("./chars.json");
+const buildCharacterMap=require("./lib/buildCharacterMap");
 const config=require("./config.json");
 const fs = require('fs');
+//let chars=require("./chars.json");
 
 const cursor_hide="\u001B[?25l";
 const cursor_show="\u001B[?25h";
 const log_file="log/main.log";
+const compressedCharacter_file="compressedCharacterMap.bin";
+const fontSizes=[2,3];
 
 let log_data="";
 const {
@@ -139,67 +142,15 @@ function writeText(startX,startY,size,content,...rgba){
 		const char=content[index];
 		//const currentX=startX+index*(8*size+letterSpacing)-ignoreRows;
 		//writePixelPos(currentX,startY,...rgba);
-		let charMap=chars[char];
-		if(!charMap||size===0) continue;
-		if(size>1){
-			let newCharMap=[];
+		if(!chars[size]) throw new Error("SIZE "+size+" do not exist! please build this size first!");
+		const charObject=chars[size][char];
+		if(!charObject) continue;
+		const charMap=charObject.map;
 
-			for(let counterRow=0; counterRow<8; counterRow+=1){
-				const row=[];
-				for(let counterColumn=0; counterColumn<8; counterColumn+=1){
-					const pixelIndex=counterRow*8+counterColumn;
-					const byte=charMap[pixelIndex];
-
-					for(let i=0; i<size; i+=1){
-						row.push(byte);
-					}
-				}
-				for(let i=0; i<size; i+=1){
-					newCharMap=[
-						...newCharMap,
-						...row,
-					];
-				}
-			}
-
-			charMap=newCharMap;
-		}
-		let emptyRowsAtStart=0;
-		let emptyRowsAtEnd=0;
 		if(charMap.includes(1)){
-			for(let column=0; column<8*size; column+=1){
-				let rowEmpty=true;
-				for(let row=0; row<8*size; row+=1){
-					const pixelIndex=(row*8*size)+column;
-					const writePixel=charMap[pixelIndex];
-					if(writePixel){
-						rowEmpty=false;
-						break;
-					}
-				}
-				if(rowEmpty) emptyRowsAtStart+=1;
-				else break;
-			}
-
-			for(let column=7*size; column>0; column-=1){
-				let rowEmpty=true;
-				for(let row=0; row<8*size; row+=1){
-					const pixelIndex=(row*8*size)+column;
-					const writePixel=charMap[pixelIndex];
-					if(writePixel){
-						rowEmpty=false;
-						break;
-					}
-				}
-				if(rowEmpty) emptyRowsAtEnd+=1;
-				else break;
-			}
-		}
-		currentX+=8*size-emptyRowsAtStart;
-		if(charMap.includes(1)){
-			for(let row=0; row<8*size; row+=1){
-				for(let column=0; column<8*size; column+=1){
-					const pixelIndex=(row*8*size)+column;
+			for(let row=0; row<charObject.height; row+=1){
+				for(let column=0; column<charObject.width; column+=1){
+					const pixelIndex=(row*charObject.width)+column;
 					const writePixel=charMap[pixelIndex];
 					if(!writePixel) continue;
 					const x=currentX+column;
@@ -208,7 +159,7 @@ function writeText(startX,startY,size,content,...rgba){
 				}
 			}
 		}
-		currentX+=letterSpacing-emptyRowsAtEnd;
+		currentX+=charObject.width+letterSpacing;
 	}
 }
 
@@ -216,13 +167,16 @@ log(`Video-Memory: ${frameBufferLength} Bytes.`);
 log(`Display: ${screen_width}x${screen_height}.`);
 log(`Using "${frameBufferPath}"`);
 
+buildCharacterMap.setLogging(false); // no console.log
+let chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
+
 process.stdout.write(cursor_hide); // hide the cursor in console
 
 const buffer=Buffer.alloc(frameBufferLength);
 
 const frameBufferAddress=fs.openSync(frameBufferPath,"r+"); // open framebuffer as write mode
 
-let bgColor=[255,255,255];
+let bgColor=[0,0,0]; // black is better at 3 A.M.
 
 let playerColor=[255,0,0];
 let playerPos=[Math.round(screen_width/2)-10,Math.round(screen_height/2)-10];
@@ -297,21 +251,31 @@ process.stdin.on("data",keyBuffer=>{
 			//saveLog();
 			setTimeout(()=>process.exit(0),1e2);
 			break;
-		case "r":
+		case "r":{
 			log("Reloading Chars...");
-			chars=JSON.parse(fs.readFileSync("./chars.json","utf-8"));
-			buffer.fill(255);
+			buffer.fill(0);
+			writeText(100,100,2,"Build Characters ....",255,255,255);
+			writeFrame();
+			const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
+			fs.writeFileSync(compressedCharacter_file,charsBuffer);
+			buffer.fill(0);
+			writeText(100,100,2,"Loading Characters ...",255,255,255);
+			writeFrame();
+			chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
+			buffer.fill(0);
 			writeRectangle(...playerPos,...playerSize,...playerColor);
-		case "t":	// t for test
+		}
+		case "t":{	// t for test
 			const size=3;
-			writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",0,0,0);
-			writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",0,0,0);
-			writeText(100,150,size,"0123456789");
-			writeText(100,200,size,"!\"/");
+			writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",255,255,255);
+			writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",255,255,255);
+			writeText(100,150,size,"0123456789",255,255,255);
+			writeText(100,200,size,"!\"/",255,255,255);
 			writeText(100,250,size,"Test Pass!",0,255,0);
 			writeText(100,300,size,"Press \"Q\" to quit",0,0,255);
 			makeNewFrame=true;
 			break;
+		}
 	}
 
 	if(makeNewFrame) writeFrame();
