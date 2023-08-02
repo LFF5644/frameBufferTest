@@ -238,12 +238,11 @@ let chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
 
 process.stdout.write(cursor_hide); // hide the cursor in console
 
-const buffer=Buffer.alloc(frameBufferLength);
+let buffer=Buffer.alloc(frameBufferLength);
 
 const frameBufferAddress=fs.openSync(frameBufferPath,"r+"); // open framebuffer as write mode
-
 let bgColor=[0,0,0]; // black is better at 3 A.M.
-
+let keyEventText="game";
 let playerColor=[255,0,0];
 let playerPos=[Math.round(screen_width/2)-10,Math.round(screen_height/2)-10];
 let playerSize=[20,20];
@@ -258,6 +257,7 @@ let collisionObjects=[
 	[...getRandomPos(10,10),10,10,...getRandomColor()],
 ];
 let displayedText={};
+let exitText=0;
 
 // write bg color to screen
 for(let y=0; y<screen_height-1; y+=1){
@@ -276,76 +276,109 @@ writeRectangle(...playerPos,...playerSize,...playerColor);
 
 process.stdin.setRawMode(true); // no enter required
 process.stdin.on("data",keyBuffer=>{
+
+	const exit=()=>{
+		buffer.fill(0);
+		const text="Exit Game? Y/N";
+		const [lengthX,lengthY]=getTextLength(3,text);
+		const x=Math.round(screen_width/2-lengthX/2);
+		const y=Math.round(screen_height/2-lengthY);
+		exitText=writeText(x,y,3,text,255,0,0);
+		makeNewFrame=true;
+		keyEventText="exitScreen";
+	}
 	const char=keyBuffer.toString("utf-8");
 
 	let makeNewFrame=false;
-	switch(char){
-		case "\u001b[A": // Arrow up /\
-		case "w":
-			changePlayerPos(playerPos[0],playerPos[1]-playerStep);
-			makeNewFrame=true;
-			break;
+	if(keyEventText==="game"){
+		switch(char){
+			case "\u001b[A": // Arrow up /\
+			case "w":
+				changePlayerPos(playerPos[0],playerPos[1]-playerStep);
+				makeNewFrame=true;
+				break;
 
-		case "\u001b[D": // Arrow left <-
-		case "a":
-			changePlayerPos(playerPos[0]-playerStep,playerPos[1]);
-			makeNewFrame=true;
-			break;
+			case "\u001b[D": // Arrow left <-
+			case "a":
+				changePlayerPos(playerPos[0]-playerStep,playerPos[1]);
+				makeNewFrame=true;
+				break;
 
-		case "\u001b[B": // Arrow down \/
-		case "s":
-			changePlayerPos(playerPos[0],playerPos[1]+playerStep);
-			makeNewFrame=true;
-			break;
+			case "\u001b[B": // Arrow down \/
+			case "s":
+				changePlayerPos(playerPos[0],playerPos[1]+playerStep);
+				makeNewFrame=true;
+				break;
 
-		case "\u001b[C": // Arrow right ->
-		case "d":
-			changePlayerPos(playerPos[0]+playerStep,playerPos[1]);
-			makeNewFrame=true;
-			break;
+			case "\u001b[C": // Arrow right ->
+			case "d":
+				changePlayerPos(playerPos[0]+playerStep,playerPos[1]);
+				makeNewFrame=true;
+				break;
 
-		case "\u0003": // STRG + C
-		case "\u00b1": // ESC
-		case "q":
-			buffer.fill(0);
-			writeFrame();
-			fs.close(frameBufferAddress,(err)=>{ // fix message no callback is depprecated!
-				if(err) throw err;
-			});
-
-			process.stdout.write(cursor_show); // show cursor in terminal
-			log("Game Quit!");
-			console.clear();
-			console.log("Game Quit!");
-			//saveLog();
-			setTimeout(()=>process.exit(0),1e2);
-			break;
-		case "r":{
-			log("Reloading Chars...");
-			buffer.fill(0);
-			writeText(100,100,2,"Build Characters ....",255,255,255);
-			writeFrame();
-			const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
-			fs.writeFileSync(compressedCharacter_file,charsBuffer);
-			buffer.fill(0);
-			writeText(100,100,2,"Loading Characters ...",255,255,255);
-			writeFrame();
-			chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
-			buffer.fill(0);
-			writeRectangle(...playerPos,...playerSize,...playerColor);
-		}
-		case "t":{	// t for test
-			const size=3;
-			writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",255,255,255);
-			writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",255,255,255);
-			writeText(100,150,size,"0123456789",255,255,255);
-			writeText(100,200,size,"!\"/",255,255,255);
-			writeText(100,250,size,"Test Pass!",0,255,0);
-			writeText(100,300,size,"Press \"Q\" to quit",0,0,255);
-			makeNewFrame=true;
-			break;
+			case "\u0003": // STRG + C
+			case "\u00b1": // ESC
+			case "q":
+				exit();
+				break;
+			case "r":{
+				log("Reloading Chars...");
+				buffer.fill(0);
+				writeText(100,100,2,"Build Characters ....",255,255,255);
+				writeFrame();
+				const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
+				fs.writeFileSync(compressedCharacter_file,charsBuffer);
+				buffer.fill(0);
+				writeText(100,100,2,"Loading Characters ...",255,255,255);
+				writeFrame();
+				chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
+				buffer.fill(0);
+				writeRectangle(...playerPos,...playerSize,...playerColor);
+			}
+			case "t":{	// t for test
+				const size=3;
+				writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",255,255,255);
+				writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",255,255,255);
+				writeText(100,150,size,"0123456789",255,255,255);
+				writeText(100,200,size,"!\"/",255,255,255);
+				writeText(100,250,size,"Test Pass!",0,255,0);
+				writeText(100,300,size,"Press \"Q\" to quit",0,0,255);
+				makeNewFrame=true;
+				break;
+			}
 		}
 	}
+	else if(keyEventText==="exitScreen"){
+		switch(char){
+			case "Y":
+			case "y":{
+				fs.close(frameBufferAddress,(err)=>{ // fix message no callback is depprecated!
+					if(err) throw err;
+				});
+
+				process.stdout.write(cursor_show); // show cursor in terminal
+				log("Game Quit!");
+				console.clear();
+				console.log("Game Quit!");
+				setTimeout(()=>process.exit(0),1e2);
+				break;
+			}
+			case "N":
+			case "n":{
+				if(exitText) removeText(exitText);
+				keyEventText="game";
+				// write collisionObjects
+				for(let entry of collisionObjects){
+					writeRectangle(...entry);
+				}
+				// write player
+				writeRectangle(...playerPos,...playerSize,...playerColor);
+				makeNewFrame=true;
+				break;
+			}
+		}
+	}
+	else throw new Error("keyEventText is not allowed");
 
 	if(makeNewFrame) writeFrame();
 });
