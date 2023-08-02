@@ -28,12 +28,11 @@ du benötigst eine `config.json` und einen `log` ordner du kannst dereckt beides
 - [x] game mit spieler
 - [x] spieler glitzt nicht aus dem spielfeld
 - [x] spieler kann irgenwelche sachen aufsammeln
-- [ ] counter wie viele sachen gesamelt wurden
+- [x] counter wie viele sachen gesamelt wurden
 - [x] spieler beckommt eine art `hitbox`
 - [x] es kann text angezeigt werden
 - [x] zeichen sind nur so groß wie sie sein müssen
-- [ ] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows`  das zeichen hat
-- [ ] space ` ` wird sowas wie hardcode
+- [x] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows`  das zeichen hat
 - [x] add numbers to chars.json
 - [ ] noch mehr Herausfoderungen schreiben 
 
