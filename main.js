@@ -7,6 +7,7 @@ const fs = require('fs');
 
 const cursor_hide="\u001B[?25l";
 const cursor_show="\u001B[?25h";
+const letterSpacing=10;
 const log_file="log/main.log";
 const compressedCharacter_file="compressedCharacterMap.bin";
 const fontSizes=[2,3];
@@ -110,7 +111,14 @@ function onPlayerPosChanged(){
 		//const [entry_x,entry_y,entry_width,entry_height,...entryColor]=entry;
 		const collision=checkPlayerCollision(...entry);
 		if(collision){
-			writeText(100,100,2,"WINNER!",...getRandomColor());
+			points+=1;
+			const text=String(points);
+			const [lengthX,lengthY]=getTextLength(2,text);
+			writeRectangle(...pointsTextPosSize,...bgColor);
+
+			pointsTextPosSize=[screen_width-lengthX,0,lengthY,lengthY];
+
+			writeText(screen_width-lengthX,0,2,text,...getRandomColor());
 			newCollisionObjects.push([...getRandomPos(10,10),10,10,...getRandomColor()]);
 		}
 		else newCollisionObjects.push(entry);
@@ -135,8 +143,37 @@ function writeRectangle(startX,startY,width,height,...rgb){
 		}
 	}
 }
+function getTextLength(size,content){
+	let currentX=0;
+	let currentY=0;
+	for(let index=0; index<content.length; index+=1){
+		const char=content[index];
+		if(!chars[size]) throw new Error("SIZE "+size+" do not exist! please build this size first!");
+		const charObject=chars[size][char];
+		if(!charObject) continue;
+		const charMap=charObject.map;
+		currentX+=charObject.width+letterSpacing;
+		currentY=charObject.height;
+	}
+	currentX-=letterSpacing;
+	return[currentX,currentY];
+}
+function getTextPos(startX,startY,size,content){
+	let currentX=startX;
+	let currentY=0;
+	for(let index=0; index<content.length; index+=1){
+		const char=content[index];
+		if(!chars[size]) throw new Error("SIZE "+size+" do not exist! please build this size first!");
+		const charObject=chars[size][char];
+		if(!charObject) continue;
+		const charMap=charObject.map;
+		currentX+=charObject.width+letterSpacing;
+		currentY=charObject.height;
+	}
+	currentX-=letterSpacing;
+	return[currentX,currentY];
+}
 function writeText(startX,startY,size,content,...rgba){
-	const letterSpacing=10;
 	let currentX=startX;
 	for(let index=0; index<content.length; index+=1){
 		const char=content[index];
@@ -182,6 +219,8 @@ let playerColor=[255,0,0];
 let playerPos=[Math.round(screen_width/2)-10,Math.round(screen_height/2)-10];
 let playerSize=[20,20];
 let playerStep=20;
+let points=0;
+let pointsTextPosSize=[screen_width-getTextLength(2,"0")[0],0,...getTextLength(2,"0")];
 let collisionObjects=[
 	// [x,y,width,height,...rgb]
 	[...getRandomPos(10,10),10,10,...getRandomColor()],
