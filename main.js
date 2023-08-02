@@ -113,12 +113,9 @@ function onPlayerPosChanged(){
 		if(collision){
 			points+=1;
 			const text=String(points);
+			if(pointsTextId) removeText(pointsTextId);
 			const [lengthX,lengthY]=getTextLength(2,text);
-			writeRectangle(...pointsTextPosSize,...bgColor);
-
-			pointsTextPosSize=[screen_width-lengthX,0,lengthY,lengthY];
-
-			writeText(screen_width-lengthX,0,2,text,...getRandomColor());
+			pointsTextId=writeText(screen_width-lengthX,0,2,text,...getRandomColor());
 			newCollisionObjects.push([...getRandomPos(10,10),10,10,...getRandomColor()]);
 		}
 		else newCollisionObjects.push(entry);
@@ -173,8 +170,10 @@ function getTextPos(startX,startY,size,content){
 	currentX-=letterSpacing;
 	return[currentX,currentY];
 }
-function writeText(startX,startY,size,content,...rgba){
+function writeText(startX,startY,size,content,...rgb){
+	const id=Date.now()+JSON.stringify(getRandomPos())+JSON.stringify(getRandomColor())
 	let currentX=startX;
+	let lengthY=0;
 	for(let index=0; index<content.length; index+=1){
 		const char=content[index];
 		//const currentX=startX+index*(8*size+letterSpacing)-ignoreRows;
@@ -192,12 +191,42 @@ function writeText(startX,startY,size,content,...rgba){
 					if(!writePixel) continue;
 					const x=currentX+column;
 					const y=startY+row;
-					writePixelPos(x,y,...rgba);
+					writePixelPos(x,y,...rgb);
 				}
 			}
 		}
 		currentX+=charObject.width+letterSpacing;
+		lengthY=charObject.height;
 	}
+	currentX-=letterSpacing;
+	const lengthX=currentX-startX;
+
+	const textEntry={
+		content,
+		lengthX,
+		lengthY,
+		startX,
+		startY,
+		size,
+		color: rgb,
+	};
+	displayedText[id]=textEntry;
+
+	return id;
+}
+function removeText(id){
+	const textEntry=displayedText[id];
+	delete displayedText[id];
+	if(!textEntry) throw new Error("text id not exist");
+
+	const {startX,startY,size,content}=textEntry;
+
+	writeText(startX,startY,size,content,...bgColor);
+}
+function getTextEntry(id){
+	const textEntry=displayedText[id];
+	if(!textEntry) throw new Error("text id not exist");
+	return textEntry;
 }
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
@@ -220,7 +249,7 @@ let playerPos=[Math.round(screen_width/2)-10,Math.round(screen_height/2)-10];
 let playerSize=[20,20];
 let playerStep=20;
 let points=0;
-let pointsTextPosSize=[screen_width-getTextLength(2,"0")[0],0,...getTextLength(2,"0")];
+let pointsTextId=0;
 let collisionObjects=[
 	// [x,y,width,height,...rgb]
 	[...getRandomPos(10,10),10,10,...getRandomColor()],
@@ -228,6 +257,7 @@ let collisionObjects=[
 	[...getRandomPos(10,10),10,10,...getRandomColor()],
 	[...getRandomPos(10,10),10,10,...getRandomColor()],
 ];
+let displayedText={};
 
 // write bg color to screen
 for(let y=0; y<screen_height-1; y+=1){
