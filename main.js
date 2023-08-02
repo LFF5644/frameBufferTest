@@ -36,24 +36,12 @@ function getRandomPos(width=0,height=0){
 	];
 }
 function getPos(x,y){
-	let posX=x;
-	let posY=y*screen_width;
-	let pos=posX+posY;
-	let offset=pos*4;
-	/*log({
-		x,
-		y,
-		posX,
-		posY,
-		pos,
-		offset,
-		offset_other: (x+y*screen_width)*4, // chatGPT
-	});*/
-	return offset;
+	// create own cordinatensystem
+	return (y*screen_width+x)*4;
 }
 function writeFrame(){return new Promise(resolve=>{
 	// write into framebuffer
-	fs.write(frameBufferAddress,buffer,0,frameBufferLength,0,resolve);
+	fs.write(frameBufferAddress,currentScreenBuffer,0,frameBufferLength,0,resolve);
 })}
 function log(data){
 	// append into log
@@ -66,15 +54,15 @@ async function saveLog(){
 		fs.appendFile(log_file,data,r);
 	});
 }
-function writePixel_offset(offset,...rgba){
-	buffer.writeUInt8(rgba[0],offset);
-	buffer.writeUInt8(rgba[1],offset+1);
-	buffer.writeUInt8(rgba[2],offset+2);
-	buffer.writeUInt8(255,offset+3);
+function writePixel_offset(offset,...rgb){
+	currentScreenBuffer.writeUInt8(rgb[0],offset);
+	currentScreenBuffer.writeUInt8(rgb[1],offset+1);
+	currentScreenBuffer.writeUInt8(rgb[2],offset+2);
+	currentScreenBuffer.writeUInt8(255,offset+3);
 }
-function writePixelPos(x,y,...rgba){
+function writePixelPos(x,y,...rgb){
 	const offset=getPos(x,y);
-	writePixel_offset(offset,...rgba);
+	writePixel_offset(offset,...rgb);
 }
 function checkPlayerCollision(entry_x,entry_y,entry_width,entry_height){
 	const [player_x,player_y]=playerPos;
@@ -228,6 +216,32 @@ function getTextEntry(id){
 	if(!textEntry) throw new Error("text id not exist");
 	return textEntry;
 }
+function clearScreen(...rgb){
+	if(rgb.length<3) rgb=bgColor;
+	for(let i=0; i<frameBufferLength; i+=4){
+		currentScreenBuffer.writeUInt8(rgb[0],i);
+		currentScreenBuffer.writeUInt8(rgb[1],i+1);
+		currentScreenBuffer.writeUInt8(rgb[2],i+2);
+		currentScreenBuffer.writeUInt8(255,i+3);
+	}
+}
+function changeScreen(name,...rgb){
+	if(name===currentScreenName) return;
+	screens[currentScreenName]=currentScreenBuffer;
+	if(!screens[name]){
+		if(rgb.length===0) rgb=bgColor;
+		const buffer=Buffer.alloc(frameBufferLength);
+		for(let i=0; i<frameBufferLength-3; i+=4){
+			buffer.writeUInt8(rgb[0],i);
+			buffer.writeUInt8(rgb[1],i+1);
+			buffer.writeUInt8(rgb[2],i+2);
+			buffer.writeUInt8(255,i+3);
+		}
+		screens[name]=buffer;
+	};
+	currentScreenBuffer=screens[name];
+	currentScreenName=name;
+}
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
 log(`Display: ${screen_width}x${screen_height}.`);
@@ -238,11 +252,12 @@ let chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
 
 process.stdout.write(cursor_hide); // hide the cursor in console
 
-let buffer=Buffer.alloc(frameBufferLength);
+let currentScreenBuffer=Buffer.alloc(frameBufferLength);
 
 const frameBufferAddress=fs.openSync(frameBufferPath,"r+"); // open framebuffer as write mode
 let bgColor=[0,0,0]; // black is better at 3 A.M.
-let keyEventText="game";
+let currentScreenName="game";
+let screens={};
 let playerColor=[255,0,0];
 let playerPos=[Math.round(screen_width/2)-10,Math.round(screen_height/2)-10];
 let playerSize=[20,20];
@@ -276,21 +291,20 @@ writeRectangle(...playerPos,...playerSize,...playerColor);
 
 process.stdin.setRawMode(true); // no enter required
 process.stdin.on("data",keyBuffer=>{
-
 	const exit=()=>{
-		buffer.fill(0);
+		changeScreen("exitScreen");
+		clearScreen(0,0,255);
 		const text="Exit Game? Y/N";
 		const [lengthX,lengthY]=getTextLength(3,text);
 		const x=Math.round(screen_width/2-lengthX/2);
 		const y=Math.round(screen_height/2-lengthY);
 		exitText=writeText(x,y,3,text,255,0,0);
 		makeNewFrame=true;
-		keyEventText="exitScreen";
 	}
 	const char=keyBuffer.toString("utf-8");
 
 	let makeNewFrame=false;
-	if(keyEventText==="game"){
+	if(currentScreenName==="game"){
 		switch(char){
 			case "\u001b[A": // Arrow up /\
 			case "w":
@@ -320,19 +334,20 @@ process.stdin.on("data",keyBuffer=>{
 			case "\u00b1": // ESC
 			case "q":
 				exit();
+				makeNewFrame=true;
 				break;
 			case "r":{
 				log("Reloading Chars...");
-				buffer.fill(0);
+				currentScreenBuffer.fill(0);
 				writeText(100,100,2,"Build Characters ....",255,255,255);
 				writeFrame();
 				const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
 				fs.writeFileSync(compressedCharacter_file,charsBuffer);
-				buffer.fill(0);
+				currentScreenBuffer.fill(0);
 				writeText(100,100,2,"Loading Characters ...",255,255,255);
 				writeFrame();
 				chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
-				buffer.fill(0);
+				currentScreenBuffer.fill(0);
 				writeRectangle(...playerPos,...playerSize,...playerColor);
 			}
 			case "t":{	// t for test
@@ -348,31 +363,25 @@ process.stdin.on("data",keyBuffer=>{
 			}
 		}
 	}
-	else if(keyEventText==="exitScreen"){
+	else if(currentScreenName==="exitScreen"){
 		switch(char){
 			case "Y":
 			case "y":{
-				fs.close(frameBufferAddress,(err)=>{ // fix message no callback is depprecated!
-					if(err) throw err;
-				});
-
+				clearScreen(0,0,0);
+				writeFrame();
 				process.stdout.write(cursor_show); // show cursor in terminal
 				log("Game Quit!");
 				console.clear();
 				console.log("Game Quit!");
+				fs.close(frameBufferAddress,(err)=>{ // fix message no callback is depprecated!
+					if(err) throw err;
+				});
 				setTimeout(()=>process.exit(0),1e2);
 				break;
 			}
 			case "N":
 			case "n":{
-				if(exitText) removeText(exitText);
-				keyEventText="game";
-				// write collisionObjects
-				for(let entry of collisionObjects){
-					writeRectangle(...entry);
-				}
-				// write player
-				writeRectangle(...playerPos,...playerSize,...playerColor);
+				changeScreen("game");
 				makeNewFrame=true;
 				break;
 			}

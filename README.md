@@ -30,6 +30,7 @@ du benötigst eine `config.json` und einen `log` ordner du kannst dereckt beides
 - [x] spieler kann irgenwelche sachen aufsammeln
 - [x] counter wie viele sachen gesamelt wurden
 - [x] spieler beckommt eine art `hitbox`
+- [ ] spieler und objekte bekommen eine textur
 - [x] es kann text angezeigt werden
 - [x] zeichen sind nur so groß wie sie sein müssen
 - [x] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows` das zeichen hat
