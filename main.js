@@ -275,11 +275,7 @@ let displayedText={};
 let exitText=0;
 
 // write bg color to screen
-for(let y=0; y<screen_height-1; y+=1){
-	for(let x=0; x<screen_width-1; x+=1){
-		writePixelPos(x,y,...bgColor);
-	}
-}
+clearScreen();
 
 // write collisionObjects
 for(let entry of collisionObjects){
@@ -293,12 +289,12 @@ process.stdin.setRawMode(true); // no enter required
 process.stdin.on("data",keyBuffer=>{
 	const exit=()=>{
 		changeScreen("exitScreen");
-		clearScreen(0,0,255);
+		clearScreen(255,0,0);
 		const text="Exit Game? Y/N";
 		const [lengthX,lengthY]=getTextLength(3,text);
 		const x=Math.round(screen_width/2-lengthX/2);
 		const y=Math.round(screen_height/2-lengthY);
-		exitText=writeText(x,y,3,text,255,0,0);
+		exitText=writeText(x,y,3,text,0,0,255);
 		makeNewFrame=true;
 	}
 	const char=keyBuffer.toString("utf-8");
@@ -331,7 +327,6 @@ process.stdin.on("data",keyBuffer=>{
 				break;
 
 			case "\u0003": // STRG + C
-			case "\u00b1": // ESC
 			case "q":
 				exit();
 				makeNewFrame=true;
@@ -373,14 +368,16 @@ process.stdin.on("data",keyBuffer=>{
 				log("Game Quit!");
 				console.clear();
 				console.log("Game Quit!");
-				fs.close(frameBufferAddress,(err)=>{ // fix message no callback is depprecated!
-					if(err) throw err;
-				});
-				setTimeout(()=>process.exit(0),1e2);
+				fs.close(frameBufferAddress,(err)=>{if(err) throw err;});
+				process.stdin.pause(); // not execute on stdin and not wait for input
+				clearInterval(saveLog_interval);
+				setTimeout(saveLog,0);
 				break;
 			}
+			case "q":
 			case "N":
-			case "n":{
+			case "n":
+			case "\u0003":{ // STRG + C
 				changeScreen("game");
 				makeNewFrame=true;
 				break;
@@ -394,4 +391,4 @@ process.stdin.on("data",keyBuffer=>{
 
 writeFrame();
 
-setInterval(saveLog,1e3);
+const saveLog_interval=setInterval(saveLog,1e3);
