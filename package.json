@@ -4,8 +4,8 @@
 	"description": "this is a test repo in this i test the /dev/fb0",
 	"main": "main.js",
 	"scripts": {
-		"install": "mkdir log; bash install.sh >> log/install.log; less log/install.log",
-		"update": "bash update.sh >> log/update.log; less log/update.log",
+		"install": "mkdir log; bash install.sh",
+		"update": "bash update.sh",
 		"init": "node init.js"
 	},
 	"keywords": ["frameBuffer","/dev/fb0","linux-only","game","2D"],
