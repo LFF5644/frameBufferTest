@@ -1,6 +1,10 @@
 #!/usr/bin/env node
+const buildCharacterMap=require("./lib/buildCharacterMap");
 const child_process=require("child_process");
 const fs=require("fs");
+
+const compressedCharacter_file="compressedCharacterMap.bin";
+const fontSizes=[2,3];
 
 let config={};
 try{
@@ -65,7 +69,13 @@ config={
 	frameBufferLength: config.frameBufferLength,
 	frameBufferPath: config.frameBufferPath?config.frameBufferPath:"/dev/fb0",
 };
-
+console.log("build CharacterMap ...");
+const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
+console.log("write into file "+compressedCharacter_file+" "+charsBuffer.length+" Bytes ...");
+fs.writeFile(compressedCharacter_file,charsBuffer,(err)=>{
+	if(err) throw err;
+	console.log(compressedCharacter_file+" was saved successfully!");
+});
 writeConfig(err=>{
 	if(err) throw new Error("Cant save config");
 	console.log("Saved into Config!");
