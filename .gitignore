@@ -1,3 +1,10 @@
+# NPM
+/package-lock.json
+/node_modules
+
+# PROGRAM
 /log
 /config.json
+
+# OTHER
 .fuse_hidden*
