@@ -2,27 +2,43 @@
 
 In diesem project lerne ich über den frame buffer!
 
-readme ist auf dem stand vom 29.07.2023 um 23:58 Uhr
+readme ist auf dem stand vom 03.08.2023 um 17:51 Uhr
 
 ## Required
 - [Linux](https://google.com/search?q=Linux%20download) ich empfele [Linuxmint](https://linuxmint.com/download.php) für windows nutzer
 - [NodeJS](https://nodejs.org/de/download)
 - console (TTY 1 - 6)
 - frame buffer schreib berechtitung erlangen durch `sudo usermod -aG video $USER; sudo reboot` oder durch root berechtigungen
-- fbset um informationen über den frambuffer zu erlangen `sudo apt intall fbset -y` wird nicht benötigt ist aber für ungewönliche bildformate empfolen
+- `fbset` um informationen über den frambuffer zu erlangen `sudo apt intall fbset -y` wird nicht benötigt ist aber für ungewönliche bildformate empfolen
 
-## Quick start guide
-du benötigst eine `config.json` und einen `log` ordner du kannst dereckt beides beckommen indem du `./init.js` eingibst wenn nodejs nicht gefunden wird gib `node init.js` ein und falz die datei `/dev/fb0` nicht geöfnet werden kann versuche es mit `sudo` forweg wenn du dein system nicht neu starten möchtest.
+## Quick start guide & install
+### Erster Programmstart
+einfach `npm install` eingeben dadurch werden folgende befehle ausgeführt:
+- alle in der `package.json` festgelegten module werden in `node_modules` abgelegt.
+- `fbset` wird mit hilfe von `apt` insterliert.
+- sie bekommen die gruppe `video` mit `usermod` zugeteilt diese benötigen sie um auf `/dev/fb0` **WARNUNG**: dies wird erst nach einem neustart übernommen.
+- es wird der `log/` ordner erstelt.
+- `npm run init` wird am ende noch ausgeführt dies erstellt die config datei mit ihrem screen configuration und baut die `chars.json` => `compressedCharacterMap.bin`.
+
+zum starten einfach `npm start` oder `./main.js` oder `sudo ./main.js` alternativ kann auch statt `./` `node` verwendet werden.
+
+### Upgrade auf neuesten commit
+zum abgleich mit github `npm run update` eingeben dadurch wird folgender code ausgeführt:
+- `git pull`: das herrunterladen von github servern
+- `npm update`: neue module insterlieren und auf den neuesten stand bringen
+- `npm run init`: fals sich das formart der config.json geändert hat dieses erneuern (einstellungen werden beiberhalten in den meisten fällen)
 
 ## Datei Bezeichnung
-- `config.json`: enthält alle wichtigen infos kann mit `node init.js` erstellt werden denn diese datei wird immer benötigt wenn mit dem frame buffer zusamm gearbeitet wird!
+- `config.json`: enthält alle wichtigen infos kann mit `npm run init` erstellt werden denn diese datei wird immer benötigt wenn mit dem frame buffer zusamm gearbeitet wird!
 - `chars.json`: enthält die bustaben/zeichen die angezeigt werden können (code by LFF5644)
 - `cls.sh`: leert framebuffer und seubert bildschirm
-- `init.js`: definirt config.json
+- `init.js`: definirt config.json und baut `chars.json` => `compressedCharacterMap.bin`
 - `simpleThing.js`: zeichnet ein 100*100 quadrat auf den bildschirm (code by chatGPT)
 - `playWithChars.js`: erhält als parameter ein charachter in der chars.json und gibt diesen aus
 - `overwriteFB.js`: ist eine endlos schleife wo einfach jeder pixel eine andere fabe hat `STRG + C` to exit
 - `main.js`: ein kleines spiel wo man einen spieler mit den pfeiltasten bewegen kann und mit `t` alle bustaben auf dem bildschirm ausgibt und mit `r` wird die `chars.json` neu geladen und die bustaben erneut angezeigt mit `q` wird es beendet und in `log/main.log` wird eine log datei erstelt
+- `install.sh`: wird von npm aufgerufen wenn man `npm install` eingibt
+- `update.sh`: wird von npm aufgerufen wenn man `npm run update` eingibt
 
 ## Aufgaben, Tasks und Herausfoderungen
 - [x] game mit spieler
@@ -37,9 +53,7 @@ du benötigst eine `config.json` und einen `log` ordner du kannst dereckt beides
 - [ ] 1px = 1bit nicht byte!
 - [ ] build charackters => `init.js`
 - [x] add numbers to chars.json
-- [ ] es werden screens/desktops/views erschaffen zb game, menu, exit
-- [ ] es wird für eine view nicht jedes mal `1920*1080x4` bytes benötigt sondern der hintergrund wird rausgerächnet
-- [ ] basirt auf einem inhaltsverzeichnis `"rectange", x, y, width, height, rgb`
+- [x] es werden screens/desktops/views erschaffen zb game, menu, exit
 - [ ] noch mehr Herausfoderungen schreiben 
 
 ###### README.md erstellt 29.07.2023 um 13:12 Uhr
