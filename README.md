@@ -51,7 +51,7 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] zeichen sind nur so groß wie sie sein müssen
 - [x] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows` das zeichen hat
 - [ ] 1px = 1bit nicht byte!
-- [ ] build charackters => `init.js`
+- [x] build charackters => `init.js`
 - [x] add numbers to chars.json
 - [x] es werden screens/desktops/views erschaffen zb game, menu, exit
 - [ ] noch mehr Herausfoderungen schreiben 
