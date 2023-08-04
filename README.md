@@ -48,6 +48,8 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] spieler beckommt eine art `hitbox`
 - [ ] spieler und objekte bekommen eine textur
 - [ ] textur ist nicht enfabig
+- [ ] spieler fabe auswählbar
+- [ ] multiplayer mit mehreren spielern
 - [x] es kann text angezeigt werden
 - [x] zeichen sind nur so groß wie sie sein müssen
 - [x] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows` das zeichen hat
