@@ -47,13 +47,15 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] counter wie viele sachen gesamelt wurden
 - [x] spieler beckommt eine art `hitbox`
 - [ ] spieler und objekte bekommen eine textur
+- [ ] textur ist nicht enfabig
 - [x] es kann text angezeigt werden
 - [x] zeichen sind nur so groß wie sie sein müssen
 - [x] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows` das zeichen hat
-- [ ] 1px = 1bit nicht byte!
+- [x] 1px = 1bit nicht byte!
 - [x] build charackters => `init.js`
 - [x] add numbers to chars.json
 - [x] es werden screens/desktops/views erschaffen zb game, menu, exit
+- [ ] Hauptmenu erstellen
 - [ ] noch mehr Herausfoderungen schreiben 
 
 ###### README.md erstellt 29.07.2023 um 13:12 Uhr
