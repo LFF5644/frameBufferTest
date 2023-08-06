@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 console.log("starting ...");
 const buildCharacterMap=require("./lib/buildCharacterMap");
+const buildTexturesMap=require("./lib/buildTexturesMap");
 const config=require("./config.json");
-const fs = require('fs');
-//let chars=require("./chars.json");
+const fs=require("fs");
 
 const cursor_hide="\u001B[?25l";
 const cursor_show="\u001B[?25h";
 const letterSpacing=10;
 const log_file="log/main.log";
 const compressedCharacter_file="compressedCharacterMap.bin";
+const texturesBin_file="textures.bin";
 const fontSizes=[2,3];
 
 let log_data="";
@@ -89,8 +90,12 @@ function changePlayerPos(x,y){
 	if(playerPos[1]-20<0) playerPos[1]=0;
 	else if(playerPos[1]+20>screen_height-1) playerPos[1]=(screen_height-1)-20;
 
-	writeRectangle(...playerPos,...playerSize,...playerColor);
+	writePlayer();
 	onPlayerPosChanged();
+}
+function writePlayer(){
+	writeRectangle(...playerPos,...playerSize,...playerColor);
+	writeTexture(...playerPos,"player");
 }
 function onPlayerPosChanged(){
 	const newCollisionObjects=[];
@@ -109,17 +114,22 @@ function onPlayerPosChanged(){
 		else newCollisionObjects.push(entry);
 	}
 	changeCollisionsObjects(newCollisionObjects);
-	writeRectangle(...playerPos,...playerSize,...playerColor);
+	writePlayer();
 }
 function changeCollisionsObjects(newCollisionObjects){
 	for(let entry of collisionObjects){
 		const [entry_x,entry_y,entry_width,entry_height,...entryColor]=entry;
 		writeRectangle(entry_x,entry_y,entry_width,entry_height,...bgColor);
 	}
-	for(let entry of newCollisionObjects){
-		writeRectangle(...entry);
-	}
 	collisionObjects=newCollisionObjects;
+	writeCollisionObjects();
+}
+function writeCollisionObjects(){
+	for(let entry of collisionObjects){
+		const [x,y,width,height,...rgb]=entry;
+		writeRectangle(...entry);
+		writeTexture(x,y,"collisionObject");
+	}
 }
 function writeRectangle(startX,startY,width,height,...rgb){
 	for(let y=startY; y<startY+height; y+=1){
@@ -242,14 +252,42 @@ function changeScreen(name,...rgb){
 	currentScreenBuffer=screens[name];
 	currentScreenName=name;
 }
+function writeTexture(x,y,textureName){
+	const texture=textures[textureName];
+	if(!texture) throw new Error("texture "+textureName+" not exist!");
+
+	const {
+		width,
+		height,
+		map,
+	}=texture;
+
+	for(let row=0; row<height; row+=1){
+		for(let column=0; column<width; column+=1){
+			const pixelOffset=(row*height+column)*4;
+			const rgba=map.slice(pixelOffset,pixelOffset+4);
+
+			if(rgba[3]>0){ // a
+				const currentX=x+column;
+				const currentY=y+row;
+				writePixelPos(currentX,currentY,...rgba);
+			}
+		}
+	}
+}
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
 log(`Display: ${screen_width}x${screen_height}.`);
 log(`Using "${frameBufferPath}"`);
 
+console.log("Loading characters ...");
 buildCharacterMap.setLogging(false); // no console.log
 let chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
 
+console.log("Loading textures ...");
+let textures=buildTexturesMap.getTextures(texturesBin_file);
+
+console.log("start game ...");
 process.stdout.write(cursor_hide); // hide the cursor in console
 
 let currentScreenBuffer=Buffer.alloc(frameBufferLength);
@@ -278,12 +316,10 @@ let exitText=0;
 clearScreen();
 
 // write collisionObjects
-for(let entry of collisionObjects){
-	writeRectangle(...entry);
-}
+writeCollisionObjects();
 
 // write player
-writeRectangle(...playerPos,...playerSize,...playerColor);
+writePlayer();
 
 process.stdin.setRawMode(true); // no enter required
 process.stdin.on("data",keyBuffer=>{
@@ -332,18 +368,37 @@ process.stdin.on("data",keyBuffer=>{
 				makeNewFrame=true;
 				break;
 			case "r":{
-				log("Reloading Chars...");
+				log("Rebuilding Chars...");
 				currentScreenBuffer.fill(0);
-				writeText(100,100,2,"Build Characters ....",255,255,255);
+				writeText(100,100,2,"Build Characters....",255,255,255);
 				writeFrame();
+
 				const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
 				fs.writeFileSync(compressedCharacter_file,charsBuffer);
+				
 				currentScreenBuffer.fill(0);
-				writeText(100,100,2,"Loading Characters ...",255,255,255);
+				writeText(100,100,2,"Loading Characters...",255,255,255);
 				writeFrame();
+				
 				chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
+				
+				log("Rebuilding Textures...");
 				currentScreenBuffer.fill(0);
-				writeRectangle(...playerPos,...playerSize,...playerColor);
+				writeText(100,100,2,"Build Textures...",255,255,255);
+				writeFrame();
+
+				const texturesBuffer=buildTexturesMap.buildTextures(JSON.parse(fs.readFileSync("./textures.json","utf-8")));
+				fs.writeFrameSync(texturesBin_file,texturesBuffer);
+				
+				currentScreenBuffer.fill(0);
+				writeText(100,100,2,"Loading Textures...",255,255,255);
+				writeFrame();
+
+				textures=buildTexturesMap.getTextures(texturesBin_file);
+
+				currentScreenBuffer.fill(0);
+				writePlayer();
+				writeCollisionObjects();
 			}
 			case "t":{	// t for test
 				const size=3;
