@@ -6,5 +6,10 @@
 /log
 /config.json
 
-# OTHER
+# PROGRAM_BUILD
+compressedCharacterMap.bin
+textures.bin
+
+
+# SUBLIME_TEXT
 .fuse_hidden*
