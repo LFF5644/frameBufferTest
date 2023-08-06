@@ -2,7 +2,7 @@
 
 In diesem project lerne ich über den frame buffer!
 
-readme ist auf dem stand vom 03.08.2023 um 17:51 Uhr
+readme ist auf dem stand vom 07.08.2023 um 00:50 Uhr
 
 ## Required
 - [Linux](https://google.com/search?q=Linux%20download) ich empfele [Linuxmint](https://linuxmint.com/download.php) für windows nutzer
@@ -48,8 +48,13 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] spieler beckommt eine art `hitbox`
 - [x] spieler und objekte bekommen eine textur
 - [x] textur ist nicht enfabig
+- [ ] textur `size` parameter nutzbar
+- [ ] textur fabe ist dynamisch (das rgb`a` byte nutzen)
+- [ ] realistische & gute texturen ausdenken
 - [ ] spieler fabe auswählbar
 - [ ] multiplayer mit mehreren spielern
+- [ ] `raw tcp` nicht `socket.io` nutzen für mehr speed
+- [ ] spieler können nicht ineinnander glitzschen
 - [x] es kann text angezeigt werden
 - [x] zeichen sind nur so groß wie sie sein müssen
 - [x] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows` das zeichen hat
@@ -58,6 +63,7 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] add numbers to chars.json
 - [x] es werden screens/desktops/views erschaffen zb game, menu, exit
 - [ ] Hauptmenu erstellen
+- [ ] Herausfoderung: dieses in canvas im browser spielbar machen ... (für 2024 geplant)
 - [ ] noch mehr Herausfoderungen schreiben 
 
 ###### README.md erstellt 29.07.2023 um 13:12 Uhr
