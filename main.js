@@ -388,7 +388,7 @@ process.stdin.on("data",keyBuffer=>{
 				writeFrame();
 
 				const texturesBuffer=buildTexturesMap.buildTextures(JSON.parse(fs.readFileSync("./textures.json","utf-8")));
-				fs.writeFrameSync(texturesBin_file,texturesBuffer);
+				fs.writeFileSync(texturesBin_file,texturesBuffer);
 				
 				currentScreenBuffer.fill(0);
 				writeText(100,100,2,"Loading Textures...",255,255,255);
