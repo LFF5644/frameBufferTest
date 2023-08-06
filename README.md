@@ -46,8 +46,8 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] spieler kann irgenwelche sachen aufsammeln
 - [x] counter wie viele sachen gesamelt wurden
 - [x] spieler beckommt eine art `hitbox`
-- [ ] spieler und objekte bekommen eine textur
-- [ ] textur ist nicht enfabig
+- [x] spieler und objekte bekommen eine textur
+- [x] textur ist nicht enfabig
 - [ ] spieler fabe auswählbar
 - [ ] multiplayer mit mehreren spielern
 - [x] es kann text angezeigt werden
