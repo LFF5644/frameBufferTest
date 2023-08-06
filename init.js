@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 const buildCharacterMap=require("./lib/buildCharacterMap");
+const buildTexturesMap=require("./lib/buildTexturesMap");
 const child_process=require("child_process");
 const fs=require("fs");
 
 const compressedCharacter_file="compressedCharacterMap.bin";
+const texturesBin_file="textures.bin";
 const fontSizes=[2,3];
 
 let config={};
@@ -76,6 +78,15 @@ fs.writeFile(compressedCharacter_file,charsBuffer,(err)=>{
 	if(err) throw err;
 	console.log(compressedCharacter_file+" was saved successfully!");
 });
+
+console.log("build Textures ...");
+const texturesBuffer=buildTexturesMap.buildTextures(JSON.parse(fs.readFileSync("./textures.json","utf-8")));
+console.log("write into file "+texturesBin_file+" "+texturesBuffer.length+" Bytes ...");
+fs.writeFile(texturesBin_file,texturesBuffer,(err)=>{
+	if(err) throw err;
+	console.log(texturesBin_file+" was saved successfully!");
+});
+
 writeConfig(err=>{
 	if(err) throw new Error("Cant save config");
 	console.log("Saved into Config!");
