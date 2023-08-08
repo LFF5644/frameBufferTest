@@ -12,6 +12,7 @@ const log_file="log/main.log";
 const compressedCharacter_file="compressedCharacterMap.bin";
 const texturesBin_file="textures.bin";
 const fontSizes=[2,3];
+const screens={};
 
 let log_data="";
 const {
@@ -45,7 +46,10 @@ function writeFrame(){return new Promise(resolve=>{
 	fs.write(frameBufferAddress,currentScreenBuffer,0,frameBufferLength,0,resolve);
 })}
 function log(data){
-	// append into log
+	if(process.env.LOGGING==false){
+		clearInterval(saveLog_interval);
+		return;
+	}
 	log_data+=data+"\n";
 }
 async function saveLog(){
@@ -171,7 +175,7 @@ function getTextPos(startX,startY,size,content){
 	return[currentX,currentY];
 }
 function writeText(startX,startY,size,content,...rgb){
-	const id=Date.now()+JSON.stringify(getRandomPos())+JSON.stringify(getRandomColor())
+	const id=Date.now()+JSON.stringify(getRandomPos())+JSON.stringify(getRandomColor());
 	let currentX=startX;
 	let lengthY=0;
 	for(let index=0; index<content.length; index+=1){
@@ -239,7 +243,12 @@ function clearScreen(...rgb){
 }
 function changeScreen(name,...rgb){
 	if(name===currentScreenName) return;
-	screens[currentScreenName]=currentScreenBuffer;
+	screens[currentScreenName]={
+		...screens[currentScreenName]?screens[currentScreenName]:{},
+		buffer: currentScreenBuffer,
+		vars: currentScreenVars,
+		events: currentScreenEvents,
+	};
 	if(!screens[name]){
 		if(rgb.length===0) rgb=bgColor;
 		const buffer=Buffer.alloc(frameBufferLength);
@@ -249,9 +258,15 @@ function changeScreen(name,...rgb){
 			buffer.writeUInt8(rgb[2],i+2);
 			buffer.writeUInt8(255,i+3);
 		}
-		screens[name]=buffer;
+		screens[name]={
+			buffer,
+			events:[],
+			vars:{},
+		};
 	};
-	currentScreenBuffer=screens[name];
+	currentScreenBuffer=screens[name].buffer;
+	currentScreenEvents=screens[name].events;
+	currentScreenVars=screens[name].vars;
 	currentScreenName=name;
 }
 function writeTexture(x,y,textureName){
@@ -277,6 +292,17 @@ function writeTexture(x,y,textureName){
 		}
 	}
 }
+function addScreenEvent(eventName,fn){
+	const id=Date.now()+JSON.stringify(getRandomPos())+JSON.stringify(getRandomColor());
+	currentScreenEvents.push([id,eventName,fn]);
+	return id;
+}
+function removeScreenEvent(id){
+	// remove the element with [0]===id
+	const eventsLength=currentScreenEvents.length;
+	currentScreenEvents=currentScreenEvents.filter(item=>item[0]!==id);
+	if(eventsLength===currentScreenEvents.length) throw new Error("id '"+id+"' not found");
+}
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
 log(`Display: ${screen_width}x${screen_height}.`);
@@ -292,12 +318,13 @@ let textures=buildTexturesMap.getTextures(texturesBin_file);
 console.log("start game ...");
 process.stdout.write(cursor_hide); // hide the cursor in console
 
+let currentScreenEvents=[];
+let currentScreenName="game";
+let currentScreenVars={};
 let currentScreenBuffer=Buffer.alloc(frameBufferLength);
 
 const frameBufferAddress=fs.openSync(frameBufferPath,"r+"); // open framebuffer as write mode
 let bgColor=[0,0,0]; // black is better at 3 A.M.
-let currentScreenName="game";
-let screens={};
 let playerColor=[255,0,0];
 let playerPos=[Math.round(screen_width/2)-10,Math.round(screen_height/2)-10];
 let playerSize=[20,20];
@@ -336,9 +363,10 @@ process.stdin.on("data",keyBuffer=>{
 		makeNewFrame=true;
 	}
 	const char=keyBuffer.toString("utf-8");
-
 	let makeNewFrame=false;
-	if(currentScreenName==="game"){
+	const screen=currentScreenName;
+
+	if(screen==="game"){
 		switch(char){
 			case "\u001b[A": // Arrow up /\
 			case "w":
@@ -400,10 +428,16 @@ process.stdin.on("data",keyBuffer=>{
 				writeFrame();
 
 				textures=buildTexturesMap.getTextures(texturesBin_file);
-
-				changeScreen("game");
 			}
 			case "t":{	// t for test
+				changeScreen("info");
+				const keydownEventId=addScreenEvent("keydown",key=>{
+					removeScreenEvent(keydownEventId);
+					changeScreen("game");
+					writeFrame();
+				});
+				clearScreen();
+
 				const size=3;
 				writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",255,255,255);
 				writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",255,255,255);
@@ -416,7 +450,7 @@ process.stdin.on("data",keyBuffer=>{
 			}
 		}
 	}
-	else if(currentScreenName==="exitScreen"){
+	else if(screen==="exitScreen"){
 		switch(char){
 			case "Y":
 			case "y":{
@@ -442,11 +476,22 @@ process.stdin.on("data",keyBuffer=>{
 			}
 		}
 	}
-	else if(currentScreenName==="info"){
+	else if(screen==="info"){
 		// do nothing here
 		// onkeydown => null
 	}
 	else throw new Error("keyEventText is not allowed");
+
+	if(screen==currentScreenName){
+		const events=currentScreenEvents
+			.filter(item=>item[1]==="keydown")
+			.map(item=>[item[0],item[2]]);
+		for(let event of events){
+			const [id,fn]=event;
+			const result=fn(char);
+			if(result===true) makeNewFrame=true;
+		}
+	}
 
 	if(makeNewFrame) writeFrame();
 });
