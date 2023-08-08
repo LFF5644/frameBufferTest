@@ -93,9 +93,11 @@ function changePlayerPos(x,y){
 	writePlayer();
 	onPlayerPosChanged();
 }
-function writePlayer(){
-	writeRectangle(...playerPos,...playerSize,...playerColor);
-	writeTexture(...playerPos,"player");
+function writePlayer(x=playerPos[0],y=playerPos[1]){
+	let pos=playerPos;
+	if(pos[0]!==x||pos[1]!==y) pos=[x,y];
+	writeRectangle(...pos,...playerSize,...playerColor);
+	writeTexture(...pos,"player");
 }
 function onPlayerPosChanged(){
 	const newCollisionObjects=[];
