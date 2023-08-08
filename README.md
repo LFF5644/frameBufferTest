@@ -48,8 +48,8 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] spieler beckommt eine art `hitbox`
 - [x] spieler und objekte bekommen eine textur
 - [x] textur ist nicht enfabig
-- [ ] textur `size` parameter nutzbar
-- [ ] textur fabe ist dynamisch (das rgb`a` byte nutzen)
+- [x] textur `size` parameter nutzbar
+- [x] textur fabe ist dynamisch (das rgb`a` byte nutzen)
 - [ ] realistische & gute texturen ausdenken
 - [ ] spieler fabe auswählbar
 - [ ] multiplayer mit mehreren spielern
