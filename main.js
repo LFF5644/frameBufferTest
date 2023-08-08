@@ -84,11 +84,11 @@ function changePlayerPos(x,y){
 	writeRectangle(...playerPos,...playerSize,...bgColor);
 	playerPos=newPlayerPos;
 
-	if(playerPos[0]-20<0) playerPos[0]=0;
-	else if(playerPos[0]+20>screen_width-1) playerPos[0]=(screen_width-1)-20;
+	if(playerPos[0]-playerSize[0]<0) playerPos[0]=0;
+	else if(playerPos[0]+playerSize[0]>screen_width) playerPos[0]=screen_width-playerSize[0];
 
-	if(playerPos[1]-20<0) playerPos[1]=0;
-	else if(playerPos[1]+20>screen_height-1) playerPos[1]=(screen_height-1)-20;
+	if(playerPos[1]-playerSize[1]<0) playerPos[1]=0;
+	else if(playerPos[1]+playerSize[1]>screen_height) playerPos[1]=screen_height-playerSize[1];
 
 	writePlayer();
 	onPlayerPosChanged();
@@ -369,36 +369,37 @@ process.stdin.on("data",keyBuffer=>{
 				break;
 			case "r":{
 				log("Rebuilding Chars...");
-				currentScreenBuffer.fill(0);
-				writeText(100,100,2,"Build Characters....",255,255,255);
+				changeScreen("info");
+				clearScreen();
+				const messageColor=[255,255,255]
+				let messageId=0;
+				messageId=writeText(100,100,2,"Build Characters....",...messageColor);
 				writeFrame();
 
 				const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
 				fs.writeFileSync(compressedCharacter_file,charsBuffer);
 				
-				currentScreenBuffer.fill(0);
-				writeText(100,100,2,"Loading Characters...",255,255,255);
+				removeText(messageId);
+				messageId=writeText(100,100,2,"Loading Characters...",...messageColor);
 				writeFrame();
 				
 				chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
 				
-				log("Rebuilding Textures...");
-				currentScreenBuffer.fill(0);
-				writeText(100,100,2,"Build Textures...",255,255,255);
+				removeText(messageId);
+				messageId=writeText(100,100,2,"Build Textures...",255,255,255);
 				writeFrame();
 
+				log("Rebuilding Textures...");
 				const texturesBuffer=buildTexturesMap.buildTextures(JSON.parse(fs.readFileSync("./textures.json","utf-8")));
 				fs.writeFileSync(texturesBin_file,texturesBuffer);
 				
-				currentScreenBuffer.fill(0);
-				writeText(100,100,2,"Loading Textures...",255,255,255);
+				removeText(messageId);
+				messageId=writeText(100,100,2,"Loading Textures...",255,255,255);
 				writeFrame();
 
 				textures=buildTexturesMap.getTextures(texturesBin_file);
 
-				currentScreenBuffer.fill(0);
-				writePlayer();
-				writeCollisionObjects();
+				changeScreen("game");
 			}
 			case "t":{	// t for test
 				const size=3;
@@ -438,6 +439,10 @@ process.stdin.on("data",keyBuffer=>{
 				break;
 			}
 		}
+	}
+	else if(currentScreenName==="info"){
+		// do nothing here
+		// onkeydown => null
 	}
 	else throw new Error("keyEventText is not allowed");
 
