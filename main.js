@@ -416,11 +416,72 @@ function exit(){
 	currentScreenVars.exitText=writeText(x,y,3,text,0,0,255);
 	return true; // make new frame = true
 }
-function getPseudocolor(...rgb) {
-    const maxComponent=Math.max(...rgb);
-    const colorIndex=Math.round(maxComponent/255);
-    const pseudocolor=colorIndex*255;
-    return pseudocolor;
+function bitsToByte(bits){ // help by chatGPT
+	let byte=0;
+	for(i=0; i<8; i+=1){
+		byte=(byte<<1)|bits[i];
+	}
+	return byte;
+}
+function getPseudocolor(r,g,b) {
+	//			R,G,B,R,G,B,R,B
+	const bits=[0,0,0,0,0,0,0,0];
+	if(r===0){
+		bits[0]=0;
+		bits[3]=0;
+		bits[6]=0;
+	}
+	else if(r>255/3){
+		bits[0]=0;
+		bits[3]=0;
+		bits[6]=1;
+	}
+	else if(r>255/2){
+		bits[0]=0;
+		bits[3]=1;
+		bits[6]=1;
+	}
+	else if(r===255){
+		bits[0]=1;
+		bits[3]=1;
+		bits[6]=1;
+	}
+
+	if(g===0){
+		bits[1]=0;
+		bits[4]=0;
+	}
+	else if(g>255/2){
+		bits[1]=0;
+		bits[4]=1;
+	}
+	else if(g===255){
+		bits[1]=1;
+		bits[4]=1;
+	}
+
+	if(b===0){
+		bits[2]=0;
+		bits[5]=0;
+		bits[7]=0;
+	}
+	else if(b>255/3){
+		bits[2]=0;
+		bits[5]=0;
+		bits[7]=1;
+	}
+	else if(b>255/2){
+		bits[2]=0;
+		bits[5]=1;
+		bits[7]=1;
+	}
+	else if(b===255){
+		bits[2]=1;
+		bits[5]=1;
+		bits[7]=1;
+	}
+	const byte=bitsToByte(bits);
+	return byte;
 }
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
