@@ -60,6 +60,9 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] zeichen sind nur so groß wie sie sein müssen
 - [x] zeichen werden gebaut `build` und nicht neu berechnet bzw es wird nicht jedes mal geguckt ob und wie viele `emptyRows` das zeichen hat
 - [x] 1px = 1bit nicht byte!
+- [ ] compertiebel mit 8 bit aka. 1 bpp geräten
+- [ ] compertiebel mit 24 bit aka. 3 bpp geräten
+- [ ] compertiebel mit 32 bit aka. 4 bpp geräten
 - [x] build charackters => `init.js`
 - [x] add numbers to chars.json
 - [x] es werden screens/desktops/views erschaffen zb game, menu, exit
