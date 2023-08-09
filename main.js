@@ -454,15 +454,87 @@ currentScreenVars.menu={
 	entrys:[
 		{
 			label: "Spielen",
-			//color: [0,255,0],
+			color: [0,255,0],
 			onEnter:()=>{
 				changeScreen("game");
 				return true;
 			},
 		},
 		{
+			label: "Bustabem neuladen",
+			color: [0,255,255],
+			onEnter:()=>{
+				log("Rebuilding Chars...");
+				changeScreen("info");
+				clearScreen();
+
+				const messageColor=[255,255,255];
+				let messageId=writeText(100,100,2,"Build Characters....",...messageColor);
+				writeFrame();
+
+				const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
+				fs.writeFileSync(compressedCharacter_file,charsBuffer);
+				
+				removeText(messageId);
+				writeText(100,100,2,"Loading Characters...",...messageColor);
+				writeFrame();
+				
+				chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
+				
+				changeScreen(lastScreen);
+				return true;
+			},
+		},
+		{
+			label: "Texturen neuladen",
+			color: [0,255,255],
+			onEnter:()=>{
+				log("Rebuilding Textures...");
+				changeScreen("info");
+				clearScreen();
+
+				let messageId=writeText(100,100,2,"Build Textures...",255,255,255);
+				writeFrame();
+
+				log("Rebuilding Textures...");
+				const texturesBuffer=buildTexturesMap.buildTextures(JSON.parse(fs.readFileSync("./textures.json","utf-8")));
+				fs.writeFileSync(texturesBin_file,texturesBuffer);
+				
+				removeText(messageId);
+				messageId=writeText(100,100,2,"Loading Textures...",255,255,255);
+				writeFrame();
+
+				textures=buildTexturesMap.getTextures(texturesBin_file);
+
+				changeScreen(lastScreen);
+				return true;
+			},
+		},
+		{
+			label: "Debug Screen",
+			color: [0,255,255],
+			onEnter:()=>{
+				changeScreen("info");
+				const keydownEventId=addScreenEvent("keydown",key=>{
+					removeScreenEvent(keydownEventId);
+					changeScreen(lastScreen);
+					writeFrame();
+				});
+				clearScreen();
+
+				const size=3;
+				writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",255,255,255);
+				writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",255,255,255);
+				writeText(100,150,size,"0123456789",255,255,255);
+				writeText(100,200,size,"!\"/",255,255,255);
+				writeText(100,250,size,"Test Pass!",0,255,0);
+				writeText(100,300,size,"Press any key to continue",0,0,255);
+				return true;
+			},
+		},
+		{
 			label: "Spiel Beenden",
-			//color: [0,0,255],
+			color: [0,0,255],
 			onEnter: exit,
 		},
 	],
@@ -507,57 +579,6 @@ process.stdin.on("data",keyBuffer=>{
 				changeScreen("menu-home");
 				makeNewFrame=true;
 				break;
-			case "r":{
-				log("Rebuilding Chars...");
-				changeScreen("info");
-				clearScreen();
-				const messageColor=[255,255,255]
-				let messageId=0;
-				messageId=writeText(100,100,2,"Build Characters....",...messageColor);
-				writeFrame();
-
-				const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
-				fs.writeFileSync(compressedCharacter_file,charsBuffer);
-				
-				removeText(messageId);
-				messageId=writeText(100,100,2,"Loading Characters...",...messageColor);
-				writeFrame();
-				
-				chars=buildCharacterMap.getCompressedCharacters(compressedCharacter_file);
-				
-				removeText(messageId);
-				messageId=writeText(100,100,2,"Build Textures...",255,255,255);
-				writeFrame();
-
-				log("Rebuilding Textures...");
-				const texturesBuffer=buildTexturesMap.buildTextures(JSON.parse(fs.readFileSync("./textures.json","utf-8")));
-				fs.writeFileSync(texturesBin_file,texturesBuffer);
-				
-				removeText(messageId);
-				messageId=writeText(100,100,2,"Loading Textures...",255,255,255);
-				writeFrame();
-
-				textures=buildTexturesMap.getTextures(texturesBin_file);
-			}
-			case "t":{	// t for test
-				changeScreen("info");
-				const keydownEventId=addScreenEvent("keydown",key=>{
-					removeScreenEvent(keydownEventId);
-					changeScreen("game");
-					writeFrame();
-				});
-				clearScreen();
-
-				const size=3;
-				writeText(100,50,size,"ABCDEFGHIJKLMNOPQRSTUVWXYZ",255,255,255);
-				writeText(100,100,size,"abcdefghijklmnopqrstuvwxyz",255,255,255);
-				writeText(100,150,size,"0123456789",255,255,255);
-				writeText(100,200,size,"!\"/",255,255,255);
-				writeText(100,250,size,"Test Pass!",0,255,0);
-				writeText(100,300,size,"Press \"Q\" to quit",0,0,255);
-				makeNewFrame=true;
-				break;
-			}
 		}
 	}
 	else if(screen==="exitScreen"){
