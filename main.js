@@ -412,7 +412,7 @@ function exit(){
 	const text="Exit Game Y/N";
 	const [lengthX,lengthY]=getTextLength(3,text);
 	const x=Math.round(screen_width/2-lengthX/2);
-	const y=Math.round(screen_height/2-lengthY);
+	const y=Math.round(screen_height/2-lengthY/2);
 	currentScreenVars.exitText=writeText(x,y,3,text,0,0,255);
 	return true; // make new frame = true
 }
