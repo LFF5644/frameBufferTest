@@ -13,6 +13,13 @@ const compressedCharacter_file="compressedCharacterMap.bin";
 const texturesBin_file="textures.bin";
 const fontSizes=[2,3];
 const screens={};
+const menuEntryTemplate={
+	label: null,
+	color: [255,255,255],
+	onEnter:()=>{
+		throw new Error("on event for this option set!");
+	}
+};
 
 let log_data="";
 const {
@@ -184,7 +191,7 @@ function writeText(startX,startY,size,content,...rgb){
 		//writePixelPos(currentX,startY,...rgba);
 		if(!chars[size]) throw new Error("SIZE "+size+" do not exist! please build this size first!");
 		const charObject=chars[size][char];
-		if(!charObject) continue;
+		if(!charObject) throw new Error("char '"+char+"' do not exist");
 		const charMap=charObject.map;
 
 		if(charMap.includes(1)){
@@ -264,6 +271,7 @@ function changeScreen(name,...rgb){
 			vars:{},
 		};
 	};
+	lastScreen=currentScreenName;
 	currentScreenBuffer=screens[name].buffer;
 	currentScreenEvents=screens[name].events;
 	currentScreenVars=screens[name].vars;
@@ -303,6 +311,88 @@ function removeScreenEvent(id){
 	currentScreenEvents=currentScreenEvents.filter(item=>item[0]!==id);
 	if(eventsLength===currentScreenEvents.length) throw new Error("id '"+id+"' not found");
 }
+function renderMenu(){
+	if(!currentScreenVars.menu) throw new Error("'currentScreenVars.menu' is not defined");
+	let {
+		selected_entry,
+		selected_page,
+		hadding,
+		entry_fontSize,
+		entrys,
+	}=currentScreenVars.menu;
+	const screenOffset=20;
+	const screenWidth_offset=screen_width-screenOffset;
+	const screenHeight_offset=screen_height-screenOffset;
+	let offset=0;
+	const lineThickness=2;
+	{// calculate hadding
+		const textLength=getTextLength(hadding.size,hadding.label);
+		const x=Math.round(screenWidth_offset/2-textLength[0]/2);
+		const y=screenOffset;
+
+		writeText(x,y,hadding.size,hadding.label,...hadding.color);
+		const startY=y+textLength[1]+10;
+		//writeLine(x,startY,textLength[0],0,lineThickness,...hadding.color);
+
+		offsetY=startY+lineThickness+50;
+	}
+
+	let maxTextWidth=0;
+	for(let index=0; index<entrys.length; index+=1){
+		const entry=entrys[index];
+		const textLength=getTextLength(entry_fontSize,entry.label);
+		if(maxTextWidth<textLength[1]) maxTextWidth=textLength[1];
+	}
+
+	for(let index=0; index<entrys.length; index+=1){
+		const entry={
+			...menuEntryTemplate,
+			...entrys[index],
+		};
+		const textLength=getTextLength(entry_fontSize,entry.label);
+		const x=Math.round(screenWidth_offset/2-textLength[0]/2);
+		const y=offsetY;
+
+		writeText(x,y,entry_fontSize,entry.label,...entry.color);
+		
+		const lineColor=selected_entry===index?entry.color:bgColor;
+
+		let lineStartY=y-10;
+		writeLine(x,lineStartY,textLength[0],0,lineThickness,...lineColor);
+
+		lineStartY=y+textLength[1]+10;
+		writeLine(x,lineStartY,textLength[0],0,lineThickness,...lineColor);
+
+		offsetY+=10+lineThickness*2+textLength[1]+30;
+	}
+}
+function writeLine(startX,startY,length,mode,lineThickness,...rgb){
+	if(mode===1||mode==="|"){
+		for(let x=startX; x<startX+lineThickness; x+=1){
+			for(let y=startY; y<startY+length; y+=1){
+				writePixelPos(x,y,...rgb);
+			}
+		}
+	}
+	else if(mode===0||mode==="-"){
+		for(let y=startY; y<startY+lineThickness; y+=1){
+			for(let x=startX; x<startX+length; x+=1){
+				writePixelPos(x,y,...rgb);
+			}
+		}
+	}
+	else throw new Error("mode is not allowed!");
+}
+function exit(){
+	changeScreen("exitScreen");
+	clearScreen(255,0,0);
+	const text="Exit Game Y/N";
+	const [lengthX,lengthY]=getTextLength(3,text);
+	const x=Math.round(screen_width/2-lengthX/2);
+	const y=Math.round(screen_height/2-lengthY);
+	currentScreenVars.exitText=writeText(x,y,3,text,0,0,255);
+	return true; // make new frame = true
+}
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
 log(`Display: ${screen_width}x${screen_height}.`);
@@ -318,6 +408,7 @@ let textures=buildTexturesMap.getTextures(texturesBin_file);
 console.log("start game ...");
 process.stdout.write(cursor_hide); // hide the cursor in console
 
+let lastScreen="game";
 let currentScreenEvents=[];
 let currentScreenName="game";
 let currentScreenVars={};
@@ -339,7 +430,6 @@ let collisionObjects=[
 	[...getRandomPos(10,10),10,10,...getRandomColor()],
 ];
 let displayedText={};
-let exitText=0;
 
 // write bg color to screen
 clearScreen();
@@ -350,18 +440,38 @@ writeCollisionObjects();
 // write player
 writePlayer();
 
+changeScreen("menu-home");
+clearScreen();
+currentScreenVars.menu={
+	hadding:{
+		label: "Hauptmenu",
+		color: [0,0,255],
+		size: 3,
+	},
+	selected_entry: 0,
+	selected_page: 0,
+	entry_fontSize: 2,
+	entrys:[
+		{
+			label: "Spielen",
+			//color: [0,255,0],
+			onEnter:()=>{
+				changeScreen("game");
+				return true;
+			},
+		},
+		{
+			label: "Spiel Beenden",
+			//color: [0,0,255],
+			onEnter: exit,
+		},
+	],
+};
+renderMenu();
+writeFrame();
+
 process.stdin.setRawMode(true); // no enter required
 process.stdin.on("data",keyBuffer=>{
-	const exit=()=>{
-		changeScreen("exitScreen");
-		clearScreen(255,0,0);
-		const text="Exit Game? Y/N";
-		const [lengthX,lengthY]=getTextLength(3,text);
-		const x=Math.round(screen_width/2-lengthX/2);
-		const y=Math.round(screen_height/2-lengthY);
-		exitText=writeText(x,y,3,text,0,0,255);
-		makeNewFrame=true;
-	}
 	const char=keyBuffer.toString("utf-8");
 	let makeNewFrame=false;
 	const screen=currentScreenName;
@@ -394,7 +504,7 @@ process.stdin.on("data",keyBuffer=>{
 
 			case "\u0003": // STRG + C
 			case "q":
-				exit();
+				changeScreen("menu-home");
 				makeNewFrame=true;
 				break;
 			case "r":{
@@ -470,7 +580,7 @@ process.stdin.on("data",keyBuffer=>{
 			case "N":
 			case "n":
 			case "\u0003":{ // STRG + C
-				changeScreen("game");
+				changeScreen(lastScreen);
 				makeNewFrame=true;
 				break;
 			}
@@ -479,6 +589,44 @@ process.stdin.on("data",keyBuffer=>{
 	else if(screen==="info"){
 		// do nothing here
 		// onkeydown => null
+	}
+	else if(screen.startsWith("menu-")){
+		if(!currentScreenVars.menu) throw new Error("this in not a menu");
+		switch(char){
+			case "\u001b[A": // Arrow up /\
+			case "w":{
+				const length=currentScreenVars.menu.entrys.length-1;
+				let index=currentScreenVars.menu.selected_entry;
+				index-=1;
+				if(index<0) index=0;
+				currentScreenVars.menu.selected_entry=index;
+				renderMenu();
+				makeNewFrame=true;
+				break;
+			}
+			case "\u001b[B": // Arrow down \/
+			case "s":{
+				const length=currentScreenVars.menu.entrys.length-1;
+				let index=currentScreenVars.menu.selected_entry;
+				index+=1;
+				if(index>length) index=length;
+				currentScreenVars.menu.selected_entry=index;
+				renderMenu();
+				makeNewFrame=true;
+				break;
+			}
+			case "\n":
+			case "\r":{
+				const index=currentScreenVars.menu.selected_entry;
+				const entry=currentScreenVars.menu.entrys[index];
+				const fn=entry.onEnter;
+				let result=false;
+				if(fn) result=fn();
+				else console.log("no function!")
+				if(result===true) makeNewFrame=true;
+				break;
+			}
+		}
 	}
 	else throw new Error("keyEventText is not allowed");
 
@@ -495,7 +643,5 @@ process.stdin.on("data",keyBuffer=>{
 
 	if(makeNewFrame) writeFrame();
 });
-
-writeFrame();
 
 const saveLog_interval=setInterval(saveLog,1e3);
