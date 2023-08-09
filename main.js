@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// use 'mapped io'
 console.log("starting ...");
 const buildCharacterMap=require("./lib/buildCharacterMap");
 const buildTexturesMap=require("./lib/buildTexturesMap");
@@ -27,6 +28,7 @@ const {
 	frameBufferPath,
 	screen_height,
 	screen_width,
+	bytesPerPixel,
 }=config;
 
 function getRandomColor(){
@@ -46,7 +48,7 @@ function getRandomPos(width=0,height=0){
 }
 function getPos(x,y){
 	// create own cordinatensystem
-	return (y*screen_width+x)*4;
+	return (y*screen_width+x)*bytesPerPixel;
 }
 function writeFrame(){return new Promise(resolve=>{
 	// write into framebuffer
@@ -67,10 +69,17 @@ async function saveLog(){
 	});
 }
 function writePixel_offset(offset,...rgb){
-	currentScreenBuffer.writeUInt8(rgb[0],offset);
-	currentScreenBuffer.writeUInt8(rgb[1],offset+1);
-	currentScreenBuffer.writeUInt8(rgb[2],offset+2);
-	currentScreenBuffer.writeUInt8(255,offset+3);
+	if(bytesPerPixel===1){
+		const byte=getPseudocolor(...rgb);
+		currentScreenBuffer.writeUInt8(byte,offset);
+	}
+	else if(bytesPerPixel>2){
+		currentScreenBuffer.writeUInt8(rgb[0],offset);
+		currentScreenBuffer.writeUInt8(rgb[1],offset+1);
+		currentScreenBuffer.writeUInt8(rgb[2],offset+2);
+		if(bytesPerPixel===4) currentScreenBuffer.writeUInt8(255,offset+3);
+	}
+	else throw new Error(`${bytesPerPixel} bytes per pixel not supported!`);
 }
 function writePixelPos(x,y,...rgb){
 	const offset=getPos(x,y);
@@ -241,11 +250,18 @@ function getTextEntry(id){
 }
 function clearScreen(...rgb){
 	if(rgb.length<3) rgb=bgColor;
-	for(let i=0; i<frameBufferLength; i+=4){
-		currentScreenBuffer.writeUInt8(rgb[0],i);
-		currentScreenBuffer.writeUInt8(rgb[1],i+1);
-		currentScreenBuffer.writeUInt8(rgb[2],i+2);
-		currentScreenBuffer.writeUInt8(255,i+3);
+	for(let i=0; i<frameBufferLength; i+=bytesPerPixel){
+		if(bytesPerPixel===1){
+			const byte=getPseudocolor(...rgb);
+			currentScreenBuffer.writeUInt8(byte,i);
+		}
+		else if(bytesPerPixel>2){
+			currentScreenBuffer.writeUInt8(rgb[0],i);
+			currentScreenBuffer.writeUInt8(rgb[1],i+1);
+			currentScreenBuffer.writeUInt8(rgb[2],i+2);
+			if(bytesPerPixel===4) currentScreenBuffer.writeUInt8(255,i+3);
+		}
+		else throw new Error(`${bytesPerPixel} bytes per pixel not supported!`);
 	}
 }
 function changeScreen(name,...rgb){
@@ -259,11 +275,18 @@ function changeScreen(name,...rgb){
 	if(!screens[name]){
 		if(rgb.length===0) rgb=bgColor;
 		const buffer=Buffer.alloc(frameBufferLength);
-		for(let i=0; i<frameBufferLength-3; i+=4){
-			buffer.writeUInt8(rgb[0],i);
-			buffer.writeUInt8(rgb[1],i+1);
-			buffer.writeUInt8(rgb[2],i+2);
-			buffer.writeUInt8(255,i+3);
+		for(let i=0; i<frameBufferLength-3; i+=bytesPerPixel){
+			if(bytesPerPixel===1){
+				const byte=getPseudocolor(...rgb);
+				currentScreenBuffer.writeUInt8(byte,i);
+			}
+			else if(bytesPerPixel>2){
+				currentScreenBuffer.writeUInt8(rgb[0],i);
+				currentScreenBuffer.writeUInt8(rgb[1],i+1);
+				currentScreenBuffer.writeUInt8(rgb[2],i+2);
+				if(bytesPerPixel===4) currentScreenBuffer.writeUInt8(255,i+3);
+			}
+			else throw new Error(`${bytesPerPixel} bytes per pixel not supported!`);
 		}
 		screens[name]={
 			buffer,
@@ -316,38 +339,38 @@ function renderMenu(){
 	let {
 		selected_entry,
 		selected_page,
-		hadding,
+		headline,
 		entry_fontSize,
-		entrys,
+		entries,
 	}=currentScreenVars.menu;
 	const screenOffset=20;
 	const screenWidth_offset=screen_width-screenOffset;
 	const screenHeight_offset=screen_height-screenOffset;
 	let offset=0;
 	const lineThickness=2;
-	{// calculate hadding
-		const textLength=getTextLength(hadding.size,hadding.label);
+	{// calculate headline
+		const textLength=getTextLength(headline.size,headline.label);
 		const x=Math.round(screenWidth_offset/2-textLength[0]/2);
 		const y=screenOffset;
 
-		writeText(x,y,hadding.size,hadding.label,...hadding.color);
+		writeText(x,y,headline.size,headline.label,...headline.color);
 		const startY=y+textLength[1]+10;
-		//writeLine(x,startY,textLength[0],0,lineThickness,...hadding.color);
+		//writeLine(x,startY,textLength[0],0,lineThickness,...headline.color);
 
 		offsetY=startY+lineThickness+50;
 	}
 
 	let maxTextWidth=0;
-	for(let index=0; index<entrys.length; index+=1){
-		const entry=entrys[index];
+	for(let index=0; index<entries.length; index+=1){
+		const entry=entries[index];
 		const textLength=getTextLength(entry_fontSize,entry.label);
 		if(maxTextWidth<textLength[1]) maxTextWidth=textLength[1];
 	}
 
-	for(let index=0; index<entrys.length; index+=1){
+	for(let index=0; index<entries.length; index+=1){
 		const entry={
 			...menuEntryTemplate,
-			...entrys[index],
+			...entries[index],
 		};
 		const textLength=getTextLength(entry_fontSize,entry.label);
 		const x=Math.round(screenWidth_offset/2-textLength[0]/2);
@@ -392,6 +415,12 @@ function exit(){
 	const y=Math.round(screen_height/2-lengthY);
 	currentScreenVars.exitText=writeText(x,y,3,text,0,0,255);
 	return true; // make new frame = true
+}
+function getPseudocolor(...rgb) {
+    const maxComponent=Math.max(...rgb);
+    const colorIndex=Math.round(maxComponent/255);
+    const pseudocolor=colorIndex*255;
+    return pseudocolor;
 }
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
@@ -443,7 +472,7 @@ writePlayer();
 changeScreen("menu-home");
 clearScreen();
 currentScreenVars.menu={
-	hadding:{
+	headline:{
 		label: "Hauptmenu",
 		color: [0,0,255],
 		size: 3,
@@ -451,7 +480,7 @@ currentScreenVars.menu={
 	selected_entry: 0,
 	selected_page: 0,
 	entry_fontSize: 2,
-	entrys:[
+	entries:[
 		{
 			label: "Spielen",
 			color: [0,255,0],
@@ -616,7 +645,7 @@ process.stdin.on("data",keyBuffer=>{
 		switch(char){
 			case "\u001b[A": // Arrow up /\
 			case "w":{
-				const length=currentScreenVars.menu.entrys.length-1;
+				const length=currentScreenVars.menu.entries.length-1;
 				let index=currentScreenVars.menu.selected_entry;
 				index-=1;
 				if(index<0) index=0;
@@ -627,7 +656,7 @@ process.stdin.on("data",keyBuffer=>{
 			}
 			case "\u001b[B": // Arrow down \/
 			case "s":{
-				const length=currentScreenVars.menu.entrys.length-1;
+				const length=currentScreenVars.menu.entries.length-1;
 				let index=currentScreenVars.menu.selected_entry;
 				index+=1;
 				if(index>length) index=length;
@@ -639,7 +668,7 @@ process.stdin.on("data",keyBuffer=>{
 			case "\n":
 			case "\r":{
 				const index=currentScreenVars.menu.selected_entry;
-				const entry=currentScreenVars.menu.entrys[index];
+				const entry=currentScreenVars.menu.entries[index];
 				const fn=entry.onEnter;
 				let result=false;
 				if(fn) result=fn();

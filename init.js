@@ -41,6 +41,35 @@ console.log(`Screen: ${config.screen_width}x${config.screen_height}`);
 
 console.log(`Frame-Size: ${config.frameBufferLength} Bytes`);
 
+let bpp=null;
+try{
+	bpp=String(
+		child_process.execSync("fbset -i | grep 'Visual'")
+			.toString("utf-8")
+			.trim()
+			.split(":")[1]
+			.trim()
+	);
+}catch(e){
+	bpp=null;
+}
+if(bpp==="TRUECOLOR"){
+	console.log(`Virtual: "${bpp}" bytesPerPixel 4`);
+	bpp=4;
+}
+else if(bpp==="PSEUDOCOLOR"){
+	console.log(`Virtual: "${bpp}" bytesPerPixel 1`);
+	bpp=1;
+}
+else if(bpp===null){
+	console.log("WARNING: fbset is not install cant get COLOR MODE default is TRUECOLOR if this do not work try other or install fbset")
+	bpp=4;
+}
+else{
+	console.log(`WARNING: virtual: ${bpp} is not supported! try to use TRUECOLOR`);
+	bpp=4;
+}
+
 let real_screen_width=0;
 try{
 	real_screen_width=Number(
@@ -55,11 +84,11 @@ try{
 }
 
 if(real_screen_width===0||isNaN(real_screen_width)){
-	console.log("WARNING: fbset is not installed it is not required but if you do not have 1920x1080 then you can get errors! install it with 'sudo apt install fbset' good luck");
+	console.log("WARNING: can not get screen width without fbset if you have errors install it!");
 }
-else if(real_screen_width/4!==config.screen_width){
-	config.screen_width=real_screen_width/4;
-	console.log(`REAL LINE LENGTH: ${config.screen_width} Bytes`);
+else if(real_screen_width/bpp!==config.screen_width){
+	config.screen_width=real_screen_width/bpp;
+	console.log(`FBSET lineLength: ${config.screen_width} Bytes`);
 }
 try{
 	child_process.execSync("mkdir log");
@@ -70,6 +99,7 @@ config={
 	screen_width: config.screen_width,
 	frameBufferLength: config.frameBufferLength,
 	frameBufferPath: config.frameBufferPath?config.frameBufferPath:"/dev/fb0",
+	bytesPerPixel: bpp,
 };
 console.log("build CharacterMap ...");
 const charsBuffer=buildCharacterMap.compressCharacters(JSON.parse(fs.readFileSync("./chars.json","utf-8")),fontSizes);
