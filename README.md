@@ -52,6 +52,7 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] textur fabe ist dynamisch (das rgb`a` byte nutzen)
 - [ ] realistische & gute texturen ausdenken
 - [ ] spieler fabe auswählbar
+- [ ] sounds hinzufügen (mit `play-sound` modul)
 - [ ] multiplayer mit mehreren spielern
 - [ ] `raw tcp` nicht `socket.io` nutzen für mehr speed
 - [ ] spieler können nicht ineinnander glitzschen
@@ -62,8 +63,8 @@ zum abgleich mit github `npm run update` eingeben dadurch wird folgender code au
 - [x] build charackters => `init.js`
 - [x] add numbers to chars.json
 - [x] es werden screens/desktops/views erschaffen zb game, menu, exit
-- [ ] Hauptmenu erstellen
-- [ ] Herausfoderung: dieses in canvas im browser spielbar machen ... (für 2024 geplant)
+- [x] Hauptmenu erstellen
+- [ ] menus dynamisch bearbeiten und nicht überschreiben
 - [ ] noch mehr Herausfoderungen schreiben 
 
 ###### README.md erstellt 29.07.2023 um 13:12 Uhr
