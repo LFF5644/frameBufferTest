@@ -461,7 +461,7 @@ currentScreenVars.menu={
 			},
 		},
 		{
-			label: "Bustabem neuladen",
+			label: "Buchstaben neuladen",
 			color: [0,255,255],
 			onEnter:()=>{
 				log("Rebuilding Chars...");
