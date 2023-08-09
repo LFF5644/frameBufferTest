@@ -278,13 +278,13 @@ function changeScreen(name,...rgb){
 		for(let i=0; i<frameBufferLength-3; i+=bytesPerPixel){
 			if(bytesPerPixel===1){
 				const byte=getPseudocolor(...rgb);
-				currentScreenBuffer.writeUInt8(byte,i);
+				buffer.writeUInt8(byte,i);
 			}
 			else if(bytesPerPixel>2){
-				currentScreenBuffer.writeUInt8(rgb[0],i);
-				currentScreenBuffer.writeUInt8(rgb[1],i+1);
-				currentScreenBuffer.writeUInt8(rgb[2],i+2);
-				if(bytesPerPixel===4) currentScreenBuffer.writeUInt8(255,i+3);
+				buffer.writeUInt8(rgb[0],i);
+				buffer.writeUInt8(rgb[1],i+1);
+				buffer.writeUInt8(rgb[2],i+2);
+				if(bytesPerPixel===4) buffer.writeUInt8(255,i+3);
 			}
 			else throw new Error(`${bytesPerPixel} bytes per pixel not supported!`);
 		}
