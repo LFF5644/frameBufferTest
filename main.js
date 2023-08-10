@@ -4,6 +4,7 @@ console.log("starting ...");
 const buildCharacterMap=require("./lib/buildCharacterMap");
 const buildTexturesMap=require("./lib/buildTexturesMap");
 const config=require("./config.json");
+const Player=require("node-aplay");
 const fs=require("fs");
 
 const cursor_hide="\u001B[?25l";
@@ -21,6 +22,10 @@ const menuEntryTemplate={
 		throw new Error("on event for this option set!");
 	}
 };
+const sounds={
+	"coin": "media/coin.wav",
+};
+const cached={};
 
 let log_data="";
 const {
@@ -126,6 +131,7 @@ function onPlayerPosChanged(){
 		//const [entry_x,entry_y,entry_width,entry_height,...entryColor]=entry;
 		const collision=checkPlayerCollision(...entry);
 		if(collision){
+			playSound("coin");
 			points+=1;
 			const text=String(points);
 			if(pointsTextId) removeText(pointsTextId);
@@ -462,10 +468,27 @@ function getPseudocolor(b,g,r){
 	else return ((r * 7 / 255) << 5) + ((g * 7 / 255) << 2) + (b * 3 / 255);
 	return color;
 }
+function playSound(name){
+	if(!sounds[name]) throw new Error("sound "+name+" not exist!");
+	const player=sounds[name];
+	player.play();
+}
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
 log(`Display: ${screen_width}x${screen_height}.`);
 log(`Using "${frameBufferPath}"`);
+
+{ // loading sounds
+	process.stdout.write("Loading Sounds ... 0/"+Object.keys(sounds).length);
+	const keys=Object.keys(sounds);
+	for(let index=0; index<keys.length; index+=1){
+		process.stdout.write("\rLoading Sounds ... "+index+1+"/"+keys.length);
+		const name=keys[index];
+		const path=sounds[name];
+		sounds[name]=new Player(path);
+	}
+	console.log("\rLoading Sounds ... "+keys.length+"/"+keys.length+" succsess!");
+}
 
 console.log("Loading characters ...");
 buildCharacterMap.setLogging(false); // no console.log
