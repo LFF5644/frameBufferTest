@@ -7,6 +7,7 @@ readme ist auf dem stand vom 07.08.2023 um 00:50 Uhr
 ## Required
 - [Linux](https://google.com/search?q=Linux%20download) ich empfele [Linuxmint](https://linuxmint.com/download.php) für windows nutzer
 - [NodeJS](https://nodejs.org/de/download)
+- APlay (für das wiedergeben von sounds)
 - console (TTY 1 - 6)
 - frame buffer schreib berechtitung erlangen durch `sudo usermod -aG video $USER; sudo reboot` oder durch root berechtigungen
 - `fbset` um informationen über den frambuffer zu erlangen `sudo apt intall fbset -y` wird nicht benötigt ist aber für ungewönliche bildformate empfolen
