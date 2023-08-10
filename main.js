@@ -377,7 +377,7 @@ function renderMenu(){
 		const y=offsetY;
 
 		writeText(x,y,entry_fontSize,entry.label,...entry.color);
-		
+
 		const lineColor=selected_entry===index?entry.color:bgColor;
 
 		let lineStartY=y-10;
@@ -423,65 +423,44 @@ function bitsToByte(bits){ // help by chatGPT
 	}
 	return byte;
 }
-function getPseudocolor(r,g,b) {
-	//			R,G,B,R,G,B,R,B
-	const bits=[0,0,0,0,0,0,0,0];
-	if(r===0){
-		bits[0]=0;
-		bits[3]=0;
-		bits[6]=0;
-	}
-	else if(r>255/3){
-		bits[0]=0;
-		bits[3]=0;
-		bits[6]=1;
-	}
-	else if(r>255/2){
-		bits[0]=0;
-		bits[3]=1;
-		bits[6]=1;
-	}
-	else if(r===255){
-		bits[0]=1;
-		bits[3]=1;
-		bits[6]=1;
-	}
+function getPseudocolor(b,g,r){
+	// 24/32 bit colors https://www.rapidtables.com/web/color/RGB_Color.html
+	// 8 bit colors     https://doc.ecoscentric.com/ref/framebuf-colour.html
+	const PSEUDOCOLOR_BLACK=0x00;
+	const PSEUDOCOLOR_BLUE=0x01;
+	const PSEUDOCOLOR_GREEN=0x02;
+	const PSEUDOCOLOR_CYAN=0x03;
+	const PSEUDOCOLOR_RED=0x04;
+	const PSEUDOCOLOR_MAGENTA=0x05;
+	const PSEUDOCOLOR_BROWN=0x06;
+	const PSEUDOCOLOR_LIGHTGREY=0x07;
+	const PSEUDOCOLOR_LIGHTGRAY=0x07;
+	const PSEUDOCOLOR_DARKGREY=0x08;
+	const PSEUDOCOLOR_DARKGRAY=0x08;
+	const PSEUDOCOLOR_LIGHTBLUE=0x09;
+	const PSEUDOCOLOR_LIGHTGREEN=0x0A;
+	const PSEUDOCOLOR_LIGHTCYAN=0x0B;
+	const PSEUDOCOLOR_LIGHTRED=0x0C;
+	const PSEUDOCOLOR_LIGHTMAGENTA=0x0D;
+	const PSEUDOCOLOR_YELLOW=0x0E;
+	const PSEUDOCOLOR_WHITE=0x0F;
+	const rgb=`${r},${g},${b}`;
+	let color=0x00;
 
-	if(g===0){
-		bits[1]=0;
-		bits[4]=0;
-	}
-	else if(g>255/2){
-		bits[1]=0;
-		bits[4]=1;
-	}
-	else if(g===255){
-		bits[1]=1;
-		bits[4]=1;
-	}
+	if(rgb==="255,0,0") color=PSEUDOCOLOR_LIGHTRED;
+	else if(rgb==="128,0,0") color=PSEUDOCOLOR_RED;
 
-	if(b===0){
-		bits[2]=0;
-		bits[5]=0;
-		bits[7]=0;
-	}
-	else if(b>255/3){
-		bits[2]=0;
-		bits[5]=0;
-		bits[7]=1;
-	}
-	else if(b>255/2){
-		bits[2]=0;
-		bits[5]=1;
-		bits[7]=1;
-	}
-	else if(b===255){
-		bits[2]=1;
-		bits[5]=1;
-		bits[7]=1;
-	}
-	const byte=bitsToByte(bits);
-	return byte;
+	else if(rgb==="0,255,0") color=PSEUDOCOLOR_LIGHTGREEN;
+	else if(rgb==="0,128,0") color=PSEUDOCOLOR_GREEN;
+
+	else if(rgb==="0,0,255") color=PSEUDOCOLOR_BLUE;
+
+	else if(rgb==="255,255,0") color=PSEUDOCOLOR_YELLOW;
+
+	else if(rgb==="255,255,255") color=PSEUDOCOLOR_WHITE;
+
+	else return ((r * 7 / 255) << 5) + ((g * 7 / 255) << 2) + (b * 3 / 255);
+	return color;
 }
 
 log(`Video-Memory: ${frameBufferLength} Bytes.`);
