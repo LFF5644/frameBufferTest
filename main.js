@@ -422,13 +422,6 @@ function exit(){
 	currentScreenVars.exitText=writeText(x,y,3,text,0,0,255);
 	return true; // make new frame = true
 }
-function bitsToByte(bits){ // help by chatGPT
-	let byte=0;
-	for(i=0; i<8; i+=1){
-		byte=(byte<<1)|bits[i];
-	}
-	return byte;
-}
 function getPseudocolor(b,g,r){
 	// 24/32 bit colors https://www.rapidtables.com/web/color/RGB_Color.html
 	// 8 bit colors     https://doc.ecoscentric.com/ref/framebuf-colour.html
