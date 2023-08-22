@@ -8,7 +8,16 @@
 		"update": "bash update.sh",
 		"init": "node init.js"
 	},
-	"keywords": ["frameBuffer","/dev/fb0","linux-only","game","2D"],
+	"keywords": [
+		"frameBuffer",
+		"/dev/fb0",
+		"linux-only",
+		"game",
+		"2D"
+	],
 	"author": "LFF5644",
-	"license": "ISC"
+	"license": "ISC",
+	"dependencies": {
+		"node-aplay": "^1.0.3"
+	}
 }
